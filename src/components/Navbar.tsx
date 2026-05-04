@@ -22,6 +22,8 @@ export default function Navbar() {
         <Link href="/" className="hover:text-gold transition-colors">Home</Link>
         <Link href="/about" className="hover:text-gold transition-colors">About Us</Link>
         <Link href="/pricing" className="hover:text-gold transition-colors">Pricing</Link>
+        <Link href="/contact" className="hover:text-gold transition-colors">Contact</Link>
+        <Link href="/legal" className="hover:text-gold transition-colors">Legal</Link>
       </div>
 
       {/* CTA Button & Mobile Toggle */}
@@ -45,6 +47,8 @@ export default function Navbar() {
           <Link href="/" className="text-white hover:text-gold">Home</Link>
           <Link href="/about" className="text-white hover:text-gold">About Us</Link>
           <Link href="/pricing" className="text-white hover:text-gold">Pricing</Link>
+          <Link href="/contact" className="text-white hover:text-gold">Contact</Link>
+          <Link href="/legal" className="text-white hover:text-gold">Legal</Link>
           <button className="w-full bg-gold text-black px-6 py-2.5 rounded-full font-bold mt-2">
             Get the App
           </button>

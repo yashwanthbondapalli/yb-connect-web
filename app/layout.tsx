@@ -24,7 +24,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
       {/* Apply the font variable to the body */}
-      <body className={`${outfit.variable} font-sans relative min-h-screen flex flex-col antialiased`}>
+      <body
+        // 1. Keep your classes clean
+        className={`${outfit.variable} font-sans relative min-h-screen flex flex-col`}
+        // 2. Add this as a boolean prop, NOT a class
+        suppressHydrationWarning={true}
+      >
         
         {/* Persistent Background Elements */}
         <div className="glow-blob top-[10%] left-[-10%] animate-pulse-glow pointer-events-none"></div>
