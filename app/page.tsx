@@ -38,18 +38,19 @@ export default function Home() {
       {/* --- HERO SECTION --- */}
       <section className="max-w-7xl mx-auto px-6 lg:px-12 pt-16 pb-32 relative z-10 flex flex-col lg:flex-row items-center gap-4">
         
+        
         {/* Left Content */}
         <motion.div 
           initial="hidden" animate="visible" variants={staggerContainer}
           className="w-full lg:w-[50%] flex flex-col items-start text-left lg:-mt-40 lg:ml-16 z-20"
         >
           <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111623] border border-[#1E293B] text-[11px] font-medium text-[#FACC15] mb-8 shadow-[0_0_15px_rgba(250,204,21,0.1)]">
-            <FaStar className="animate-pulse" /> India's Trusted Mentorship Platform
+            <FaStar className="animate-pulse" /> Indias Trusted Mentorship Platform
           </motion.div>
           
           <motion.h1 variants={fadeUp} className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-6 tracking-tight">
-            Mentor. Connect.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FACC15] to-yellow-200">Grow.<span className="text-3xl relative -top-6 ml-1 animate-bounce inline-block text-white">✨</span></span>
+            Experts. In your.<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FACC15] to-yellow-200">Pocket.<span className="text-3xl relative -top-6 ml-1 animate-bounce inline-block text-white">✨</span></span>
           </motion.h1>
           
           <motion.p variants={fadeUp} className="text-[#94A3B8] text-[16px] md:text-[18px] mb-10 max-w-lg leading-relaxed">
@@ -78,13 +79,14 @@ export default function Home() {
 
         {/* Right Content (3D Floating Phones) */}
         <div className="w-full lg:w-[40%] relative h-[500px] lg:h-[650px] flex justify-center lg:justify-end z-10 hidden md:flex">
+          
           {/* Back Phone */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 0.6, scale: 0.95 }} transition={{ duration: 1, delay: 0.2 }}
             className="absolute right-[15%] lg:right-[5%] top-[40px] w-[260px] h-[550px] border-[6px] border-[#1E293B] rounded-[2.5rem] bg-black overflow-hidden shadow-[0_0_50px_rgba(168,85,247,0.3)] animate-float-delayed"
           >
              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[80px] h-[20px] bg-black rounded-full z-10"></div>
-            <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&q=80" className="w-full h-full object-cover filter brightness-75" alt="App Back" />
+            <img src="/img/screen1.png" className="w-full h-full object-cover filter brightness-75" alt="App Back" />
           </motion.div>
           {/* Front Phone */}
           <motion.div 
@@ -92,7 +94,7 @@ export default function Home() {
             className="absolute right-[5%] lg:right-[25%] top-0 w-[280px] lg:w-[320px] h-[600px] lg:h-[550px] border-[6px] border-[#1E293B] rounded-[2.5rem] bg-black overflow-hidden shadow-[0_0_80px_rgba(250,204,21,0.25)] z-20 animate-float"
           >
              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[80px] h-[20px] bg-black rounded-full z-10"></div>
-            <img src="https://images.unsplash.com/photo-1607252656733-fd7458bc97dc?w=600&q=80" className="w-full h-full object-cover" alt="App Front" />
+            <img src="/img/screen1.png" className="w-full h-full object-cover" alt="App Front" />
           </motion.div>
         </div>
       </section>
@@ -122,8 +124,105 @@ export default function Home() {
         </motion.div>
       </section>
 
+{/* --- HERO SECTION --- */}
+<section className="max-w-7xl mx-auto px-6 lg:px-12 pt-16 pb-32 relative z-10 flex flex-col lg:flex-row items-center gap-6">
+
+  {/* RIGHT CONTENT (Floating Phones) */}
+  <div className="w-full lg:w-[40%] relative h-[500px] lg:h-[650px] flex justify-center lg:justify-end z-10">
+    
+    {/* Back Phone */}
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.8 }} 
+      animate={{ opacity: 0.6, scale: 0.95 }} 
+      transition={{ duration: 1, delay: 0.2 }}
+      className="absolute right-[10%] lg:right-[5%] top-[40px] w-[220px] sm:w-[260px] h-[480px] sm:h-[550px] border-[6px] border-[#1E293B] rounded-[2.5rem] bg-black overflow-hidden shadow-[0_0_40px_rgba(168,85,247,0.25)] animate-float-delayed"
+    >
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[70px] h-[18px] bg-black rounded-full z-10"></div>
+      <img 
+        src="/img/screen2.png" 
+        className="w-full h-full object-cover filter brightness-75" 
+        alt="App Back" 
+      />
+    </motion.div>
+
+    {/* Front Phone (VIDEO) */}
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.8 }} 
+      animate={{ opacity: 1, scale: 1 }} 
+      transition={{ duration: 1, delay: 0.4 }}
+      className="absolute right-[0%] lg:right-[20%] top-0 w-[240px] sm:w-[300px] h-[520px] sm:h-[600px] border-[6px] border-[#1E293B] rounded-[2.5rem] bg-black overflow-hidden shadow-[0_0_70px_rgba(250,204,21,0.25)] z-20 animate-float"
+    >
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[70px] h-[18px] bg-black rounded-full z-10"></div>
+
+      {/* 🎥 AUTOPLAY VIDEO */}
+      <video
+        className="w-full h-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+      >
+        <source src="/img/demo.mp4" type="video/mp4" />
+      </video>
+    </motion.div>
+  </div>
+
+
+  {/* LEFT CONTENT */}
+  <motion.div 
+    initial="hidden" 
+    animate="visible" 
+    variants={staggerContainer}
+    className="w-full lg:w-[50%] flex flex-col items-start text-left lg:-mt-20 z-20"
+  >
+    
+    <motion.div 
+      variants={fadeUp} 
+      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111623] border border-[#1E293B] text-[11px] font-medium text-[#FACC15] mb-8"
+    >
+      <FaStar /> Indias Trusted Mentorship Platform
+    </motion.div>
+    
+    <motion.h1 
+      variants={fadeUp} 
+      className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-6 tracking-tight"
+    >
+      Mentors in your pocket.
+    </motion.h1>
+    
+    <motion.p 
+      variants={fadeUp} 
+      className="text-[#94A3B8] text-[15px] md:text-[18px] mb-10 max-w-lg leading-relaxed"
+    >
+      Connect with verified mentors, book 1:1 sessions, and accelerate your personal and professional growth through high-level networking.
+    </motion.p>
+    
+    <motion.div 
+      variants={fadeUp} 
+      className="flex flex-wrap gap-4 mb-10"
+    >
+      <button className="bg-[#FACC15] text-black px-8 py-3.5 rounded-full font-bold hover:bg-[#EAB308] hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm">
+        Download Now <FaArrowDown />
+      </button>
+    </motion.div>
+
+    <motion.div variants={fadeUp} className="flex items-center gap-4 mt-6">
+      <div className="flex -space-x-3">
+        <img className="w-9 h-9 rounded-full border-2 border-[#05060A]" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80" />
+        <img className="w-9 h-9 rounded-full border-2 border-[#05060A]" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80" />
+        <img className="w-9 h-9 rounded-full border-2 border-[#05060A]" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" />
+      </div>
+      <p className="text-[13px] text-[#94A3B8]">
+        Trusted by <span className="text-white font-bold">10K+</span> learners
+      </p>
+    </motion.div>
+
+  </motion.div>
+
+</section>
+
       {/* --- APP PREVIEW SECTION --- */}
-      <section className="max-w-7xl mx-auto px-6 py-28 text-center relative z-20">
+      <section className="max-w-7xl mx-auto px-2 py-0 text-center relative z-20">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <div className="text-[#FACC15] text-[11px] font-bold tracking-[0.2em] uppercase mb-4 flex items-center justify-center gap-2">
             <span className="text-lg leading-none animate-pulse">✨</span> APP PREVIEW
@@ -137,12 +236,12 @@ export default function Home() {
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {[
-            { title: "Home Dashboard", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500&q=80" },
-            { title: "Explore Categories", img: "https://images.unsplash.com/photo-1607252656733-fd7458bc97dc?w=500&q=80" },
-            { title: "Explore Categories", img: "https://images.unsplash.com/photo-1607252656733-fd7458bc97dc?w=500&q=80" },
-            { title: "Explore Categories", img: "https://images.unsplash.com/photo-1607252656733-fd7458bc97dc?w=500&q=80" },
-            { title: "Expert Roster", img: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=500&q=80" },
-            { title: "Deep Profiles", img: "https://images.unsplash.com/photo-1581287053822-fd7bf4f4bfec?w=500&q=80" }
+            { title: "Home Dashboard", img: "/img/screen1.png" },
+            { title: "Explore Categories", img: "/img/screen2.png" },
+            { title: "Choose experts", img: "/img/screen3.png" },
+            { title: "Send Request", img: "/img/screenreq.jpg" },
+            { title: "Schedule Session", img: "/img/screenapp.jpg" },
+            { title: "Deep Profiles", img: "/img/screenedt.jpg" },
           ].map((screen, idx) => (
             <div key={idx} className="snap-center shrink-0 flex flex-col items-center group cursor-pointer w-[220px]">
               <div className="w-[220px] h-[460px] border-[5px] border-[#1E293B] rounded-[2.5rem] bg-black mb-6 relative overflow-hidden group-hover:-translate-y-4 group-hover:shadow-[0_20px_40px_rgba(250,204,21,0.2)] transition-all duration-500">
@@ -155,8 +254,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* --- APP PREVIEW (Grid of 6 Phones) --- */}
-      <section className="max-w-7xl mx-auto px-6 py-24 text-center relative z-10">
+      {/*       <section className="max-w-7xl mx-auto px-6 py-24 text-center relative z-10">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <div className="text-[#FACC15] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">APP PREVIEW</div>
           <h2 className="text-[32px] sm:text-[40px] font-semibold mb-16 text-white">Experience The Interface</h2>
@@ -177,17 +275,18 @@ export default function Home() {
             >
               <div className="w-[220px] h-[450px] border-[4px] border-[#1E293B] rounded-[2rem] bg-[#0A0E17] mb-6 relative overflow-hidden shadow-lg group-hover:-translate-y-2 transition-transform duration-300">
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[50px] h-[12px] bg-[#040508] rounded-full z-10"></div>
-                <img src="https://images.unsplash.com/photo-1607252656733-fd7458bc97dc?w=400&q=80" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt={screen.title} />
+                <img src="/img/yash.png " className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt={screen.title} />
               </div>
               <h4 className="font-semibold text-[17px] text-white mb-1">{screen.title}</h4>
               <p className="text-[13px] text-[#94A3B8] max-w-[180px]">{screen.desc}</p>
             </motion.div>
           ))}
         </div>
-      </section>
+      </section> */}
+
 
       {/* --- HOW IT WORKS --- */}
-      <section className="max-w-6xl mx-auto px-6 py-20 relative z-10">
+   <section className="max-w-6xl mx-auto px-6 py-20 relative z-10">
         <motion.div className="text-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <div className="text-[#FACC15] text-[11px] font-bold tracking-[0.2em] uppercase mb-4">HOW IT WORKS</div>
           <h2 className="text-[36px] font-bold mb-24">Get Started in 3 Simple Steps</h2>
@@ -215,10 +314,9 @@ export default function Home() {
             </motion.div>
           ))}
         </div>
-      </section>
+      </section> 
 
-      {/* --- TESTIMONIALS --- */}
-      <section className="max-w-7xl mx-auto px-6 py-24 text-center relative z-10">
+      {/*       <section className="max-w-7xl mx-auto px-6 py-24 text-center relative z-10">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <div className="text-[#FACC15] text-[11px] font-bold tracking-[0.2em] uppercase mb-4">WHAT OUR USERS SAY</div>
           <h2 className="text-[36px] font-bold mb-16">Loved by Top Minds</h2>
@@ -248,7 +346,87 @@ export default function Home() {
             </div>
           ))}
         </motion.div>
-      </section>
+      </section>*/}
+
+
+
+
+
+{/* --- FOUNDER SECTION --- */}
+<section className="relative max-w-7xl mx-auto px-6 lg:px-12 py-20 lg:py-28 flex flex-col lg:flex-row items-center gap-12">
+
+  {/* LEFT CONTENT */}
+  <div className="w-full lg:w-1/2 flex flex-col items-start">
+
+    {/* Heading */}
+    <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+      Lets Connect 👋 <br />
+      ON <span className="text-[#FACC15]">YB-Connect</span>
+    </h2>
+
+    {/* Subtext */}
+    <p className="text-[#94A3B8] text-lg leading-relaxed max-w-md mb-8">
+      Download <span className="text-white font-semibold">YB-Connect</span>.  
+      If you face any problems, feel free to connect with us.  
+      We’re here to help you grow 🚀
+    </p>
+
+    {/* BUTTONS */}
+    <div className="flex flex-wrap gap-4 mb-6">
+
+      {/* Instagram */}
+      <a href="#" className="px-5 py-2.5 rounded-full bg-[#111827] border border-white/10 text-sm hover:bg-[#1f2937] transition">
+        Instagram
+      </a>
+
+      {/* Personal LinkedIn */}
+      <a href="#" className="px-5 py-2.5 rounded-full bg-[#111827] border border-white/10 text-sm hover:bg-[#1f2937] transition">
+        LinkedIn
+      </a>
+
+      {/* Company LinkedIn */}
+      <a href="#" className="px-5 py-2.5 rounded-full bg-[#111827] border border-white/10 text-sm hover:bg-[#1f2937] transition">
+        Company LinkedIn
+      </a>
+
+      {/* Email */}
+      <a href="mailto:your@email.com" className="px-5 py-2.5 rounded-full bg-[#111827] border border-white/10 text-sm hover:bg-[#1f2937] transition">
+        Email
+      </a>
+    </div>
+
+    {/* Download Button */}
+    <button className="bg-[#FACC15] text-black px-7 py-3 rounded-full font-semibold hover:bg-[#EAB308] hover:scale-105 transition-all duration-300">
+      Download App
+    </button>
+
+  </div>
+
+
+  {/* RIGHT IMAGE WITH GLOW */}
+  <div className="w-full lg:w-1/2 flex justify-center relative">
+
+    {/* GOLD GLOW BACKGROUND */}
+    <div className="absolute w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] bg-[#FACC15] opacity-20 blur-[120px] rounded-full"></div>
+
+    {/* EXTRA GLOW LAYER (DEPTH) */}
+    <div className="absolute w-[250px] h-[250px] sm:w-[350px] sm:h-[350px] bg-yellow-300 opacity-10 blur-[100px] rounded-full"></div>
+
+    {/* YOUR IMAGE */}
+    <img
+      src="/img/yash.png"   // 👉 replace with your PNG
+      alt="Yashwanth"
+      className="relative z-10 w-[260px] sm:w-[320px] lg:w-[380px] object-contain drop-shadow-[0_20px_60px_rgba(250,204,21,0.25)]"
+    />
+
+  </div>
+
+</section>
+
+
+
+
+
 
       {/* --- BOTTOM CTA --- */}
       <section className="max-w-6xl mx-auto px-6 py-16 mb-20 relative z-10">

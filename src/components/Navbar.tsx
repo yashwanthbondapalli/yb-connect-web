@@ -8,14 +8,30 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="container mx-auto px-6 lg:px-12 py-6 flex justify-between items-center relative z-50 glass-panel sticky top-0 md:rounded-full md:mt-4 md:w-[95%] shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform cursor-pointer">
-        <div className="text-gold text-2xl drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">
-          <FaUserGroup />
-        </div>
-        <span className="text-xl font-bold tracking-wider text-white">YB CONNECT</span>
-      </Link>
+<nav className="container mx-auto px-6 lg:px-12 py-5 flex justify-between items-center relative z-50 glass-panel sticky top-0 md:rounded-full md:mt-4 md:w-[95%] shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+{/* --- NEW PREMIUM STICKER ADDED HERE --- */}
+{/* --- NEW PREMIUM STICKER (MOVED TO BOTTOM) --- */}
+      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#05060A] border border-[#FACC15] shadow-[0_0_15px_rgba(250,204,21,0.3)] text-[#FACC15] text-[9px] md:text-[10px] font-bold px-4 py-1.5 rounded-full tracking-widest whitespace-nowrap z-50 animate-pulse uppercase">
+        🚀 App Launching Soon • Explore Services
+      </div>
+      {/* ------------------------------------------- */}
+  {/* Logo + Brand */}
+  <Link 
+    href="/" 
+    className="flex items-center gap-3 group"
+  >
+    {/* Logo Image */}
+    <img 
+      src="/img/loho.jpeg"
+      alt="YB Connect Logo"
+      className="h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(250,204,21,0.4)] group-hover:scale-105 transition-transform duration-300"
+    />
+
+    {/* Brand Name */}
+    <span className="text-lg sm:text-xl font-semibold tracking-wide text-white group-hover:text-[#FACC15] transition-colors duration-300">
+      YB CONNECT
+    </span>
+  </Link>
 
       {/* Desktop Links */}
       <div className="hidden lg:flex gap-8 text-[13px] font-medium text-gray-300">
@@ -55,5 +71,6 @@ export default function Navbar() {
         </div>
       )}
     </nav>
+    
   );
 }

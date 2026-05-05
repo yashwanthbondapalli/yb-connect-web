@@ -73,7 +73,7 @@ export default function Contact() {
                   </div>
                   <h3 className="text-xl font-bold mb-2 text-white font-serif">Global Headquarters</h3>
                   <p className="text-[15px] text-gray-400 leading-relaxed">
-                    Innovation Tech Park<br />
+                    Remote home<br />
                     Kakinada, Andhra Pradesh<br />
                     India
                   </p>
@@ -89,7 +89,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-[12px] text-gray-500 uppercase tracking-wider font-bold mb-1">Email Us</p>
-                      <p className="text-[15px] text-white font-medium">concierge@ybconnect.com</p>
+                      <p className="text-[15px] text-white font-medium">yashwanthbondapalli@gmail.com</p>
                     </div>
                   </div>
 
@@ -99,7 +99,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-[12px] text-gray-500 uppercase tracking-wider font-bold mb-1">Call Us</p>
-                      <p className="text-[15px] text-white font-medium">+91 98765 43210</p>
+                      <p className="text-[15px] text-white font-medium">+91 7207255542</p>
                     </div>
                   </div>
                 </div>
