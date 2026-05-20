@@ -16,7 +16,7 @@ async function getProfile(slug: string) {
   try {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://192.168.29.36:5000";
     
-    const res = await fetch(`${backendUrl}/profile/slug/${slug}`, {
+    const res = await fetch(`${backendUrl}/api/v1/profile/slug/${slug}`, {
       // 🚨 FIX: This header forces Ngrok to skip the warning page!
       headers: {
         "ngrok-skip-browser-warning": "true" 
