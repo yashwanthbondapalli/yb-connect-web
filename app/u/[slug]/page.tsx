@@ -9,14 +9,19 @@ type Props = {
 // ==========================================
 // 1. DATA FETCHING FUNCTION
 // ==========================================
+// ==========================================
+// 1. DATA FETCHING FUNCTION
+// ==========================================
 async function getProfile(slug: string) {
   try {
-    // 🚨 IMPORTANT: Change this to your production backend URL when you deploy!
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://192.168.19.26:5000";
     
-    // Fetching the profile using the exact endpoint we built in Phase 1
     const res = await fetch(`${backendUrl}/profile/slug/${slug}`, {
-      next: { revalidate: 60 }, // Cache the profile for 60 seconds for insane speed
+      // 🚨 FIX: This header forces Ngrok to skip the warning page!
+      headers: {
+        "ngrok-skip-browser-warning": "true" 
+      },
+      next: { revalidate: 60 }, 
     });
     
     const json = await res.json();
