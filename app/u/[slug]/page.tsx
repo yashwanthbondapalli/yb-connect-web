@@ -12,22 +12,32 @@ type Props = {
 // ==========================================
 // 1. DATA FETCHING FUNCTION
 // ==========================================
+// ==========================================
+// 1. DATA FETCHING FUNCTION
+// ==========================================
 async function getProfile(slug: string) {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://192.168.29.36:5000";
+    // 🚨 FIX: Fall back to your live production API, never a local home IP!
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.ybconnect.in";
+    
+    console.log(`🌐 Fetching expert profile from: ${backendUrl}/api/v1/profile/slug/${slug}`);
     
     const res = await fetch(`${backendUrl}/api/v1/profile/slug/${slug}`, {
-      // 🚨 FIX: This header forces Ngrok to skip the warning page!
       headers: {
         "ngrok-skip-browser-warning": "true" 
       },
       next: { revalidate: 60 }, 
     });
     
+    if (!res.ok) {
+      console.error(`❌ API responded with status: ${res.status}`);
+      return null;
+    }
+    
     const json = await res.json();
     return json.success ? json.data : null;
-  } catch (error) {
-    console.error("Failed to fetch profile for fallback:", error);
+  } catch (error: any) {
+    console.error("Failed to fetch profile for fallback. Error details:", error.message);
     return null;
   }
 }
