@@ -39,7 +39,8 @@ export default function Navbar() {
         <Link href="/about" className="hover:text-gold transition-colors">About Us</Link>
         <Link href="/pricing" className="hover:text-gold transition-colors">Pricing</Link>
         <Link href="/contact" className="hover:text-gold transition-colors">Contact</Link>
-        <Link href="/legal" className="hover:text-gold transition-colors">Legal</Link>
+        <Link href="/legal" className="hover:text-gold transition-colors">Privacy</Link>
+         <Link href="/terms" className="hover:text-gold transition-colors">terms</Link>
       </div>
 
       {/* CTA Button & Mobile Toggle */}
