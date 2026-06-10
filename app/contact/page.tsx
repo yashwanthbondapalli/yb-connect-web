@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, Variants } from "framer-motion";
-import { FaLocationDot, FaEnvelope, FaPhone, FaArrowRight, FaLinkedinIn, FaXTwitter, FaInstagram } from "react-icons/fa6";
+import { FaLocationDot, FaEnvelope, FaPhone, FaArrowRight, FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa6";
 
 // --- CUSTOM COMPONENT: Premium Glow Card ---
 const GlowCard = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
@@ -14,8 +14,26 @@ const GlowCard = ({ children, className = "" }: { children: React.ReactNode, cla
 };
 
 export default function Contact() {
-  const [formState, setFormState] = useState({ name: "", email: "", subject: "", message: "" });
+  // State updated: 'subject' has been removed
+  const [formState, setFormState] = useState({ name: "", email: "", message: "" });
   const [isHovered, setIsHovered] = useState(false);
+
+  // --- FORM SUBMISSION LOGIC ---
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const { name, email, message } = formState;
+
+    // Email subject now dynamically includes the sender's name
+    const emailSubject = encodeURIComponent(`YB Connect Inquiry from ${name}`);
+    const emailBody = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
+
+    // Trigger the user's default email app
+    window.location.href = `mailto:yashwanthbondapalli@gmail.com?subject=${emailSubject}&body=${emailBody}`;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormState({ ...formState, [e.target.name]: e.target.value });
+  };
 
   // Animation Variants
   const fadeUp: Variants = {
@@ -47,7 +65,7 @@ export default function Contact() {
           </motion.div>
           
           <motion.h1 variants={fadeUp} className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 font-serif tracking-tight text-white leading-[1.1]">
-            Lets Start a <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FACC15] to-yellow-200">Conversation.</span>
+            Let's Start a <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FACC15] to-yellow-200">Conversation.</span>
           </motion.h1>
           
           <motion.p variants={fadeUp} className="text-[#94A3B8] text-lg max-w-2xl mx-auto leading-relaxed">
@@ -73,7 +91,7 @@ export default function Contact() {
                   </div>
                   <h3 className="text-xl font-bold mb-2 text-white font-serif">Global Headquarters</h3>
                   <p className="text-[15px] text-gray-400 leading-relaxed">
-                    Remote home<br />
+                    Remote Home<br />
                     Kakinada, Andhra Pradesh<br />
                     India
                   </p>
@@ -83,36 +101,40 @@ export default function Contact() {
 
                 {/* Direct Comms */}
                 <div className="flex flex-col gap-6">
-                  <div className="flex items-center gap-5 group cursor-pointer">
+                  <a href="mailto:yashwanthbondapalli@gmail.com" className="flex items-center gap-5 group cursor-pointer">
                     <div className="w-12 h-12 rounded-full border border-white/10 bg-[#05060A] flex items-center justify-center text-gray-400 group-hover:text-[#FACC15] group-hover:border-[#FACC15]/50 transition-all">
                       <FaEnvelope />
                     </div>
                     <div>
                       <p className="text-[12px] text-gray-500 uppercase tracking-wider font-bold mb-1">Email Us</p>
-                      <p className="text-[15px] text-white font-medium">yashwanthbondapalli@gmail.com</p>
+                      <p className="text-[15px] text-white font-medium group-hover:text-[#FACC15] transition-colors">yashwanthbondapalli@gmail.com</p>
                     </div>
-                  </div>
+                  </a>
 
-                  <div className="flex items-center gap-5 group cursor-pointer">
+                  <a href="tel:+917207255542" className="flex items-center gap-5 group cursor-pointer">
                     <div className="w-12 h-12 rounded-full border border-white/10 bg-[#05060A] flex items-center justify-center text-gray-400 group-hover:text-[#FACC15] group-hover:border-[#FACC15]/50 transition-all">
                       <FaPhone />
                     </div>
                     <div>
                       <p className="text-[12px] text-gray-500 uppercase tracking-wider font-bold mb-1">Call Us</p>
-                      <p className="text-[15px] text-white font-medium">+91 7207255542</p>
+                      <p className="text-[15px] text-white font-medium group-hover:text-[#FACC15] transition-colors">+91 7207255542</p>
                     </div>
-                  </div>
+                  </a>
                 </div>
               </GlowCard>
             </motion.div>
 
             {/* Social Links */}
             <motion.div variants={fadeUp} className="flex gap-4">
-              {[<FaLinkedinIn key="li" />, <FaXTwitter key="tw" />, <FaInstagram key="ig" />].map((icon, idx) => (
-                <button key={idx} className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-black hover:bg-[#FACC15] hover:border-[#FACC15] transition-all duration-300 shadow-lg hover:-translate-y-1">
-                  {icon}
-                </button>
-              ))}
+              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#0A66C2] hover:border-[#0A66C2] transition-all duration-300 shadow-lg hover:-translate-y-1">
+                <FaLinkedinIn className="text-xl" />
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#FF0000] hover:border-[#FF0000] transition-all duration-300 shadow-lg hover:-translate-y-1">
+                <FaYoutube className="text-xl" />
+              </a>
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-gradient-to-tr hover:from-[#F58529] hover:via-[#DD2A7B] hover:to-[#8134AF] hover:border-transparent transition-all duration-300 shadow-lg hover:-translate-y-1">
+                <FaInstagram className="text-xl" />
+              </a>
             </motion.div>
           </motion.div>
 
@@ -124,7 +146,7 @@ export default function Contact() {
             <GlowCard className="p-10 sm:p-12">
               <h3 className="text-2xl font-bold mb-8 text-white font-serif">Send a Direct Inquiry</h3>
               
-              <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
+              <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {/* Name Input */}
@@ -132,6 +154,10 @@ export default function Contact() {
                     <label className="text-[13px] text-gray-400 font-medium ml-1">Full Name</label>
                     <input 
                       type="text" 
+                      name="name"
+                      value={formState.name}
+                      onChange={handleChange}
+                      required
                       placeholder="John Doe"
                       className="w-full bg-[#05060A]/50 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-[#FACC15]/50 focus:ring-1 focus:ring-[#FACC15]/50 transition-all duration-300"
                     />
@@ -142,25 +168,24 @@ export default function Contact() {
                     <label className="text-[13px] text-gray-400 font-medium ml-1">Email Address</label>
                     <input 
                       type="email" 
+                      name="email"
+                      value={formState.email}
+                      onChange={handleChange}
+                      required
                       placeholder="john@company.com"
                       className="w-full bg-[#05060A]/50 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-[#FACC15]/50 focus:ring-1 focus:ring-[#FACC15]/50 transition-all duration-300"
                     />
                   </div>
                 </div>
 
-                {/* Subject Dropdown */}
-<select defaultValue="" className="w-full bg-[#05060A]/50 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#FACC15]/50 focus:ring-1 focus:ring-[#FACC15]/50 transition-all duration-300 appearance-none cursor-pointer">
-  <option value="" disabled>Select a subject...</option>
-  <option value="mentorship">I want to find a Mentor</option>
-  <option value="expert">I want to become an Expert</option>
-  <option value="partnership">Enterprise Partnership</option>
-  <option value="support">General Support</option>
-</select>
-
                 {/* Message Textarea */}
                 <div className="flex flex-col gap-2 mb-2">
                   <label className="text-[13px] text-gray-400 font-medium ml-1">Your Message</label>
                   <textarea 
+                    name="message"
+                    value={formState.message}
+                    onChange={handleChange}
+                    required
                     rows={5}
                     placeholder="Tell us how we can help you..."
                     className="w-full bg-[#05060A]/50 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-[#FACC15]/50 focus:ring-1 focus:ring-[#FACC15]/50 transition-all duration-300 resize-none"
@@ -169,6 +194,7 @@ export default function Contact() {
 
                 {/* Submit Button */}
                 <button 
+                  type="submit"
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
                   className="relative overflow-hidden w-full bg-[#FACC15] text-black py-4 rounded-xl font-bold text-lg shadow-[0_5px_20px_rgba(250,204,21,0.3)] hover:shadow-[0_10px_30px_rgba(250,204,21,0.5)] transition-all duration-300 flex items-center justify-center gap-3 group"
@@ -179,7 +205,7 @@ export default function Contact() {
                   {/* Sweep Effect */}
                   <div className="absolute inset-0 h-full w-full bg-white/30 transform -skew-x-12 -translate-x-full group-hover:animate-[sweep_0.8s_ease-in-out]"></div>
                 </button>
-                <p className="text-center text-gray-500 text-[12px] mt-2">Your information is encrypted and securely transmitted.</p>
+                <p className="text-center text-gray-500 text-[12px] mt-2">Your information is securely formatted for your email client.</p>
               </form>
             </GlowCard>
           </motion.div>
