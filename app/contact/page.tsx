@@ -126,13 +126,13 @@ export default function Contact() {
 
             {/* Social Links */}
             <motion.div variants={fadeUp} className="flex gap-4">
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#0A66C2] hover:border-[#0A66C2] transition-all duration-300 shadow-lg hover:-translate-y-1">
+              <a href="https://www.linkedin.com/in/yashwanth-bondapalli-37b6a7255" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#0A66C2] hover:border-[#0A66C2] transition-all duration-300 shadow-lg hover:-translate-y-1">
                 <FaLinkedinIn className="text-xl" />
               </a>
-              <a href="https://youtube.com" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#FF0000] hover:border-[#FF0000] transition-all duration-300 shadow-lg hover:-translate-y-1">
+              <a href="https://youtube.com/@backtobase_xyz?si=g4mXC2idHaZvq3OE" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#FF0000] hover:border-[#FF0000] transition-all duration-300 shadow-lg hover:-translate-y-1">
                 <FaYoutube className="text-xl" />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-gradient-to-tr hover:from-[#F58529] hover:via-[#DD2A7B] hover:to-[#8134AF] hover:border-transparent transition-all duration-300 shadow-lg hover:-translate-y-1">
+              <a href="https://www.instagram.com/backtobase_xyz?igsh=OTF2NzJld3pyNzU2" target="_blank" rel="noreferrer" className="w-14 h-14 rounded-2xl border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-gradient-to-tr hover:from-[#F58529] hover:via-[#DD2A7B] hover:to-[#8134AF] hover:border-transparent transition-all duration-300 shadow-lg hover:-translate-y-1">
                 <FaInstagram className="text-xl" />
               </a>
             </motion.div>
