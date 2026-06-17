@@ -398,16 +398,16 @@ export default function PrivacyPolicy() {
 
   <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
     <p className="mb-2">
-      <strong>Organization:</strong> BacktoBase Community
+      <strong>Organization:</strong> Yb Connect
     </p>
     <p className="mb-2">
       <strong>Platform:</strong> YB Connect
     </p>
     <p className="mb-2">
-      <strong>Email:</strong> privacy@ybconnect.com
+      <strong>Email:</strong> yashwanthbondapalli@ybconnect.in
     </p>
     <p>
-      <strong>Support:</strong> support@ybconnect.com
+      <strong>Support:</strong> yashwanthbondapalli@ybconnect.in
     </p>
   </div>
 </div>
