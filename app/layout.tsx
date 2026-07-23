@@ -40,9 +40,9 @@ export default function RootLayout({
         <Navbar />
 
         {/* Main Page Content */}
-        <main className="flex-grow relative z-10 w-full overflow-hidden">
-          {children}
-        </main>
+<main className="flex-grow relative z-10 w-full overflow-x-hidden">
+  {children}
+</main>
 
         {/* Global Footer */}
         <Footer />

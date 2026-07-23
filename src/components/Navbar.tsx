@@ -8,8 +8,27 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-<nav className="container mx-auto px-6 lg:px-12 py-5 flex justify-between items-center relative z-50 glass-panel sticky top-0 md:rounded-full md:mt-4 md:w-[95%] shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
-{/* --- NEW PREMIUM STICKER ADDED HERE --- */}
+<nav
+  className="
+    sticky
+    top-4
+    relative
+    z-[9999]
+    mx-auto
+    w-[95%]
+    max-w-7xl
+    px-6
+    lg:px-12
+    py-5
+    flex
+    justify-between
+    items-center
+    rounded-full
+    bg-[#0A0E17]/80
+    backdrop-blur-xl
+    border border-white/10
+  "
+>
 {/* --- NEW PREMIUM STICKER (MOVED TO BOTTOM) --- */}
       <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#05060A] border border-[#FACC15] shadow-[0_0_15px_rgba(250,204,21,0.3)] text-[#FACC15] text-[9px] md:text-[10px] font-bold px-4 py-1.5 rounded-full tracking-widest whitespace-nowrap z-50 animate-pulse uppercase">
         🚀 App Launching Soon • Explore Services
