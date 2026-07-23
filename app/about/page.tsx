@@ -146,7 +146,7 @@ export default function About() {
           </div>
         </section>
 
-        {/* Mission Banner */}
+{/* Mission Banner */}
         <motion.section 
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -166,9 +166,15 @@ export default function About() {
               </div>
             </div>
             
-            <button className="z-10 px-8 py-3 rounded-xl border-2 border-gold text-gold font-bold hover:bg-gold hover:text-black transition-all whitespace-nowrap flex items-center gap-2">
+            {/* Replaced <button> with <a> for the redirect */}
+            <a 
+              href="https://www.linkedin.com/company/backtobase" /* <-- PUT YOUR LINKEDIN URL HERE */
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="z-10 px-8 py-3 rounded-xl border-2 border-gold text-gold font-bold hover:bg-gold hover:text-black transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer"
+            >
               Join the Community <FaArrowRight />
-            </button>
+            </a>
           </div>
         </motion.section>
 

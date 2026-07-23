@@ -20,20 +20,23 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-[#05060A] min-h-screen text-white font-sans overflow-x-hidden relative selection:bg-[#FACC15] selection:text-black">
-      
-      {/* --- BACKGROUND GLOWS & SWOOSH --- */}
-      <div className="absolute top-[10%] left-[-10%] w-[500px] h-[500px] rounded-full blur-[50px] bg-[radial-gradient(circle,rgba(168,85,247,0.15)_0%,rgba(5,6,10,0)_70%)] animate-pulse-glow pointer-events-none z-0"></div>
-      <div className="absolute top-[40%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[50px] bg-[radial-gradient(circle,rgba(250,204,21,0.15)_0%,rgba(5,6,10,0)_70%)] animate-pulse-glow pointer-events-none z-0" style={{ animationDelay: '2s' }}></div>
-      
-      {/* Signature Wavy Glowing Line */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 2 }}
-        className="absolute top-[100px] left-[-10%] w-[120%] h-[800px] z-0 pointer-events-none bg-no-repeat bg-cover bg-center" 
-        style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 600'%3E%3Cpath fill='none' stroke='url(%23gradient)' stroke-width='4' stroke-linecap='round' filter='url(%23glow)' d='M0,400 C300,500 500,200 800,150 C1100,100 1300,300 1440,250'/%3E%3Cdefs%3E%3ClinearGradient id='gradient' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='rgba(139, 92, 246, 0.1)'/%3E%3Cstop offset='50%25' stop-color='%23A855F7'/%3E%3Cstop offset='100%25' stop-color='%23FACC15'/%3E%3C/linearGradient%3E%3Cfilter id='glow' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='15' result='blur'/%3E%3CfeMerge%3E%3CfeMergeNode in='blur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E\")" }}
-      ></motion.div>
+<div className="bg-[#05060A] min-h-screen text-white font-sans overflow-x-hidden w-full max-w-[100vw] relative selection:bg-[#FACC15] selection:text-black">      
+     {/* --- BACKGROUND GLOWS & SWOOSH --- */}
+{/* --- BACKGROUND GLOWS & SWOOSH --- */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[10%] left-[-10%] w-[500px] h-[500px] rounded-full blur-[50px] bg-[radial-gradient(circle,rgba(168,85,247,0.15)_0%,rgba(5,6,10,0)_70%)]"></div>
+        <div className="absolute top-[40%] right-[-10%] w-[600px] h-[600px] rounded-full blur-[60px] bg-[radial-gradient(circle,rgba(250,204,21,0.1)_0%,rgba(5,6,10,0)_70%)]"></div>
+        <div className="absolute top-[20%] left-0 w-[120%] h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent transform -rotate-12"></div>
+
+        {/* Signature Wavy Glowing Line (MOVED INSIDE THE OVERFLOW-HIDDEN WRAPPER) */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 2 }}
+          className="absolute top-[100px] left-[-10%] w-[120%] h-[800px] bg-no-repeat bg-cover bg-center" 
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 600'%3E%3Cpath fill='none' stroke='url(%23gradient)' stroke-width='4' stroke-linecap='round' filter='url(%23glow)' d='M0,400 C300,500 500,200 800,150 C1100,100 1300,300 1440,250'/%3E%3Cdefs%3E%3ClinearGradient id='gradient' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='rgba(139, 92, 246, 0.1)'/%3E%3Cstop offset='50%25' stop-color='%23A855F7'/%3E%3Cstop offset='100%25' stop-color='%23FACC15'/%3E%3C/linearGradient%3E%3Cfilter id='glow' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='15' result='blur'/%3E%3CfeMerge%3E%3CfeMergeNode in='blur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E\")" }}
+        ></motion.div>
+      </div>
 
       {/* --- HERO SECTION --- */}
       <section className="max-w-7xl mx-auto px-6 lg:px-12 pt-16 pb-32 relative z-10 flex flex-col lg:flex-row items-center gap-4">

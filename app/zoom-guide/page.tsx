@@ -54,7 +54,7 @@ export default function ZoomIntegrationGuide() {
             </p>
             <ol className="list-decimal pl-5 space-y-2 text-[15px] text-gray-400">
               <li>Log into your secure <strong className="text-white">YB Connect</strong> dashboard.</li>
-              <li>Navigate to <strong className="text-white">Account Settings &gt; Integrations</strong>.</li>
+              <li>Navigate to <strong className="text-white">Profile Settings &gt; click top card</strong>.</li>
               <li>Locate the Zoom integration card and click on <strong className="text-[#FACC15]">Connect Zoom Account</strong>.</li>
               <li>You will be securely redirected to the official Zoom App Marketplace authorization screen.</li>
               <li>Review the requested permissions (Meeting Creation and Management) and click <strong className="text-white">Allow</strong>.</li>

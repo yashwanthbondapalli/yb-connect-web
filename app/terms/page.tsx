@@ -3,6 +3,7 @@
 import React from "react";
 import { motion, Variants } from "framer-motion";
 import { FaScaleBalanced, FaArrowRight } from "react-icons/fa6";
+import Link from 'next/link';
 
 export default function TermsOfService() {
   // Animation Variants
@@ -95,7 +96,7 @@ export default function TermsOfService() {
         </motion.section>
 
         {/* --- BOTTOM CTA CARD --- */}
-        <motion.div 
+       <motion.div 
           initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
           className="mt-20 p-8 sm:p-10 rounded-[2rem] border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-6"
         >
@@ -103,9 +104,14 @@ export default function TermsOfService() {
             <h3 className="text-xl font-bold text-white mb-2 font-serif">Need further clarification?</h3>
             <p className="text-sm text-gray-400">Our legal and support teams are available to assist you.</p>
           </div>
-          <button className="whitespace-nowrap bg-transparent border border-[#FACC15] text-[#FACC15] px-8 py-3.5 rounded-xl font-bold hover:bg-[#FACC15] hover:text-black transition-colors duration-300 flex items-center gap-3">
+          
+          {/* Replaced <button> with Next.js <Link> */}
+          <Link 
+            href="/contact"
+            className="whitespace-nowrap bg-transparent border border-[#FACC15] text-[#FACC15] px-8 py-3.5 rounded-xl font-bold hover:bg-[#FACC15] hover:text-black transition-colors duration-300 flex items-center gap-3"
+          >
             Contact Support <FaArrowRight />
-          </button>
+          </Link>
         </motion.div>
 
       </main>

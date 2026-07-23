@@ -41,6 +41,8 @@ export default function Navbar() {
         <Link href="/contact" className="hover:text-gold transition-colors">Contact</Link>
         <Link href="/legal" className="hover:text-gold transition-colors">Privacy</Link>
          <Link href="/terms" className="hover:text-gold transition-colors">terms</Link>
+         <Link href="/zoom-guide" className="hover:text-gold transition-colors">Video call</Link>
+         <Link href="/refund" className="hover:text-gold transition-colors">Refund policy</Link>
       </div>
 
       {/* CTA Button & Mobile Toggle */}

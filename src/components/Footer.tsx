@@ -60,6 +60,11 @@ export default function Footer() {
                   Pricing
                 </Link>
               </li>
+                            <li>
+                <Link href="/zoom-guide" className="hover:text-[#FACC15] transition">
+                  Video guide
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -77,6 +82,12 @@ export default function Footer() {
                   Terms of Service
                 </Link>
               </li>
+                            <li>
+                <Link href="/refund" className="hover:text-[#FACC15] transition">
+                  Refund policy
+                </Link>
+              </li>
+              
             </ul>
           </div>
 

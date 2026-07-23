@@ -3,6 +3,7 @@
 import React from "react";
 import { motion, Variants } from "framer-motion";
 import { FaShieldHalved, FaArrowRight } from "react-icons/fa6";
+import Link from 'next/link';
 
 export default function PrivacyPolicy() {
   // Animation Variants
@@ -75,13 +76,13 @@ export default function PrivacyPolicy() {
 
             <h3 className="text-lg font-bold text-gray-200 mt-6 mb-2">2.3 Third-Party Integrations (Zoom & Razorpay)</h3>
             <ul className="list-disc pl-5 space-y-3 text-[15px] text-gray-400 marker:text-[#FACC15]">
-              <li><strong className="text-gray-200">Zoom API Telemetry:</strong> To automate the creation of your virtual consultation rooms, we initiate a secure 3-legged OAuth 2.0 handshake with the Zoom App Marketplace. We explicitly collect and securely store your Zoom Access Tokens, Refresh Tokens, and Account IDs. During active consultations, we listen to inbound Zoom Webhooks to capture transient metadata: dynamically generated Meeting IDs, Join/Start URLs, and precise timestamp triggers (`meeting.participant_joined` and `meeting.ended`).</li>
-              <li><strong className="text-gray-200">Financial Integration:</strong> To process escrow payments and mentor payouts, we interact securely with Razorpay. We collect and store your internal Razorpay Account ID, customized payout routing numbers, and IFSC codes. <strong>Under no circumstances does YB Connect collect, process, or store your raw credit card numbers, CVV codes, or direct banking passwords.</strong> All raw financial data is handled exclusively by Razorpay's PCI-DSS compliant infrastructure.</li>
+              <li><strong className="text-gray-200">Zoom API Telemetry:</strong> To automate virtual consultation rooms, we initiate a secure OAuth 2.0 handshake with Zoom. We collect and securely store your Zoom Access Tokens, Refresh Tokens, and Account IDs. During active consultations, we process inbound Zoom Webhooks to capture transient metadata: dynamically generated Meeting IDs, Join/Start URLs, and timestamp triggers.</li>
+              <li><strong className="text-gray-200">Financial Integration:</strong> To process escrow payments and mentor payouts, we interact securely with Razorpay. When a mentor requests a withdrawal, we collect a UPI ID, contact email, and phone number specifically for that transaction. <strong>Under no circumstances does YB Connect collect, process, or store your raw credit card numbers, CVV codes, direct banking passwords, bank account numbers, or IFSC/routing codes.</strong> All raw financial data is handled exclusively by Razorpays PCI-DSS compliant infrastructure.</li>
             </ul>
 
             <h3 className="text-lg font-bold text-gray-200 mt-6 mb-2">2.4 Automated System Data & Device Telemetry</h3>
             <p className="leading-relaxed text-[15px]">
-              When utilizing the mobile client, we automatically collect basic operational telemetry to ensure application stability. This includes your device's operating system version, network status, and Expo Push Tokens (utilized strictly to deliver critical, time-sensitive application alerts regarding your scheduled appointments).
+              When utilizing the mobile client, we automatically collect basic operational telemetry to ensure application stability. This includes your devices operating system version, network status, and Expo Push Tokens (utilized strictly to deliver critical, time-sensitive application alerts regarding your scheduled appointments).
             </p>
           </div>
 
@@ -113,12 +114,12 @@ export default function PrivacyPolicy() {
 
           {/* SECTION 5 */}
           <div>
-            <h2 className="text-2xl font-bold font-serif text-white mb-4 border-l-4 border-[#FACC15] pl-4">5. Account Deletion and Cryptographic Anonymization (Soft Delete)</h2>
+            <h2 className="text-2xl font-bold font-serif text-white mb-4 border-l-4 border-[#FACC15] pl-4">5. Account Deletion and Cryptographic Anonymization (Google Play Data Deletion Policy)</h2>
             <p className="leading-relaxed text-[15px] mb-4">
-              We respect your ultimate authority over your digital presence. However, to maintain the structural integrity of historical financial transactions and consultation ledgers, we deploy a sophisticated "Soft Delete" data anonymization protocol when you request account termination.
+              We respect your ultimate authority over your digital presence. However, to maintain the structural integrity of historical financial transactions and consultation ledgers, we deploy a sophisticated hardSoft Delete data anonymization protocol when you request account termination.
             </p>
             <p className="leading-relaxed text-[15px] mb-4">
-              Upon initiating the "Delete Account" sequence within your application settings, the following irreversible actions are immediately executed by our servers:
+              Upon initiating the Delete Account sequence within your application settings, the following irreversible actions are immediately executed by our servers:
             </p>
             <ul className="list-disc pl-5 space-y-3 text-[15px] text-gray-400 marker:text-[#FACC15]">
               <li><strong>Identity Erasure:</strong> Your exact Name, Email Address, and Phone Number are permanently overwritten in our database with randomized, cryptographic hexadecimal strings (e.g., "Deleted User").</li>
@@ -415,7 +416,7 @@ export default function PrivacyPolicy() {
 
         </motion.section>
 
-        {/* --- BOTTOM CTA CARD --- */}
+       {/* --- BOTTOM CTA CARD --- */}
         <motion.div 
           initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
           className="mt-24 p-8 sm:p-10 rounded-[2rem] border border-white/10 bg-[#111520]/80 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden"
@@ -430,9 +431,13 @@ export default function PrivacyPolicy() {
             </p>
           </div>
           
-          <button className="relative z-10 whitespace-nowrap bg-transparent border border-[#FACC15] text-[#FACC15] px-8 py-4 rounded-xl font-bold hover:bg-[#FACC15] hover:text-black transition-all duration-300 flex items-center gap-3 shadow-[0_0_20px_rgba(250,204,21,0.15)] hover:shadow-[0_0_30px_rgba(250,204,21,0.3)]">
+          {/* Replaced <button> with Next.js <Link> */}
+          <Link 
+            href="/contact" 
+            className="relative z-10 whitespace-nowrap bg-transparent border border-[#FACC15] text-[#FACC15] px-8 py-4 rounded-xl font-bold hover:bg-[#FACC15] hover:text-black transition-all duration-300 flex items-center gap-3 shadow-[0_0_20px_rgba(250,204,21,0.15)] hover:shadow-[0_0_30px_rgba(250,204,21,0.3)]"
+          >
             Contact Security Team <FaArrowRight />
-          </button>
+          </Link>
         </motion.div>
 
       </main>
