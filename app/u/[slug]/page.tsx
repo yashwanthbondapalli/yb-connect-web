@@ -112,7 +112,7 @@ export default async function ExpertFallbackPage({ params }: Props) {
   const imageUrl = profile.profileImage !== "default-avatar.png" ? profile.profileImage : "/img/yash.png";
   
   // 🚨 THE MAGIC DEEP LINK URL
-  const appDeepLink = `mobile://u/${resolvedParams.slug}`;
+  const appDeepLink = `yb-connect://u/${resolvedParams.slug}`;
 
   return (
     <div className="min-h-screen bg-[#05060A] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
