@@ -8,13 +8,6 @@ type Props = {
 
 // ==========================================
 // 1. DATA FETCHING FUNCTION
-// ==========================================
-// ==========================================
-// 1. DATA FETCHING FUNCTION
-// ==========================================
-// ==========================================
-// 1. DATA FETCHING FUNCTION
-// ==========================================
 async function getProfile(slug: string) {
   try {
     // 🚨 FIX: Fall back to your live production API, never a local home IP!
@@ -111,8 +104,10 @@ export default async function ExpertFallbackPage({ params }: Props) {
   const company = profile.companyName ? `at ${profile.companyName}` : "";
   const imageUrl = profile.profileImage !== "default-avatar.png" ? profile.profileImage : "/img/yash.png";
   
-  // 🚨 THE MAGIC DEEP LINK URL
-  const appDeepLink = `yb-connect://u/${resolvedParams.slug}`;
+  // 🚨 THE MAGIC  LINK URL
+  const appLink = `intent://u/${resolvedParams.slug}#Intent;scheme=yb-connect;package=com.ybconnect.app;end;`;
+  // 🚨 THE MAGIC DEEP LINK URL (Updated for local testing)
+
 
   return (
     <div className="min-h-screen bg-[#05060A] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
@@ -149,9 +144,9 @@ export default async function ExpertFallbackPage({ params }: Props) {
             {profile.bio || `Connect with ${name} for a dedicated 1-on-1 session on YB Connect.`}
           </p>
 
-          {/* 🚨 THE DEEP LINK BUTTON */}
+          {/* 🚨 THE  LINK BUTTON */}
           <a 
-            href={appDeepLink} 
+            href={appLink} 
             className="w-full bg-[#FACC15] text-black py-4 rounded-2xl font-bold hover:bg-[#EAB308] hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 text-[15px] shadow-[0_0_20px_rgba(250,204,21,0.4)]"
           >
             Open in App to Book <FaArrowDown />
