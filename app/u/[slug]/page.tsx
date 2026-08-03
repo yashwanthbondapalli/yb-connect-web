@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { FaStar, FaArrowDown, FaBriefcase } from "react-icons/fa6";
+import DeepLinkButton from "./DeepLinkButton";
 
 // Define the Next 15+ Params Promise
 type Props = {
@@ -149,13 +150,8 @@ export default async function ExpertFallbackPage({ params }: Props) {
             {profile.bio || `Connect with ${name} for a dedicated 1-on-1 session on YB Connect.`}
           </p>
 
-          {/* 🚨 THE DEEP LINK BUTTON */}
-          <a 
-            href={appDeepLink} 
-            className="w-full bg-[#FACC15] text-black py-4 rounded-2xl font-bold hover:bg-[#EAB308] hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 text-[15px] shadow-[0_0_20px_rgba(250,204,21,0.4)]"
-          >
-            Open in App to Book <FaArrowDown />
-          </a>
+{/* 🚨 THE NEW DEEP LINK BUTTON */}
+          <DeepLinkButton slug={resolvedParams.slug} />
 
           <p className="text-xs text-gray-500 mt-4">
             Dont have the app? <a href="#" className="text-white underline">Download here</a>
