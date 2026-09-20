@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { FaStar, FaBriefcase, FaArrowDown, FaCheckCircle, FaLocationDot } from "react-icons/fa6";
+import { FaStar, FaBriefcase, FaArrowDown, FaCircleCheck, FaLocationDot } from "react-icons/fa6";
 import DeepLinkButton from "./DeepLinkButton";
 
 // Define the Next 15+ Params Promise
@@ -144,7 +144,7 @@ export default async function ExpertFallbackPage({ params }: Props) {
               />
               {/* Trust Badge */}
               <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-1.5 rounded-full border-4 border-[#0F172A]">
-                <FaCheckCircle className="text-sm" />
+                <FaCircleCheck className="text-sm" />
               </div>
             </div>
 
