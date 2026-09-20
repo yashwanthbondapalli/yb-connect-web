@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { FaStar, FaBriefcase, FaArrowDown, FaCheckCircle, FaMapMarkerAlt } from "react-icons/fa6";
+import { FaStar, FaBriefcase, FaArrowDown, FaCheckCircle, FaLocationDot } from "react-icons/fa6";
 import DeepLinkButton from "./DeepLinkButton";
 
 // Define the Next 15+ Params Promise
@@ -159,7 +159,7 @@ export default async function ExpertFallbackPage({ params }: Props) {
             {/* Info Pills (Location & Rating) */}
             <div className="flex justify-center gap-2 mb-6">
               <span className="px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-xs text-slate-300 flex items-center gap-1.5">
-                <FaMapMarkerAlt className="text-slate-400" /> {city}
+                <FaLocationDot className="text-slate-400" /> {city}
               </span>
               <span className="px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-xs text-slate-300 flex items-center gap-1.5">
                 ⭐ Top Mentor
