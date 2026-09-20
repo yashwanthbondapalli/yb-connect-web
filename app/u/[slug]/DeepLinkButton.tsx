@@ -11,21 +11,21 @@ export default function DeepLinkButton({ slug }: { slug: string }) {
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (isAndroid) {
-      // Android Chrome REQUIRES the Intent format to work reliably
-      // It tells the browser: Open 'mobile://', fallback to package 'com.yursconnect.app'
-      const androidIntent = `intent://u/${slug}#Intent;scheme=mobile;package=com.yursconnect.app;end;`;
+      // 🚨 FIX: Corrected package to com.ybconnect.app
+      // This string forces the app to open. If it fails, it automatically opens the Play Store!
+      const androidIntent = `intent://u/${slug}#Intent;scheme=mobile;package=com.ybconnect.app;end;`;
       window.location.href = androidIntent;
     } else if (isIOS) {
       // iOS Safari usually accepts the raw custom scheme
       window.location.href = `mobile://u/${slug}`;
       
-      // Optional: If the app doesn't open after 2.5 seconds, redirect to the App Store
+      // iOS fallback: If the app doesn't open after 2.5 seconds, trigger an alert or App Store link
       setTimeout(() => {
-        // Replace with your actual App Store link once published
+        alert("Please install the YB Connect app from the App Store.");
         // window.location.href = "https://apps.apple.com/app/idYOUR_APP_ID";
       }, 2500);
     } else {
-      // Desktop fallback (optional): alert the user
+      // Desktop fallback
       alert("Please open this link on a mobile device with the YB Connect app installed.");
     }
   };
