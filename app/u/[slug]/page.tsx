@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { FaStar, FaArrowDown, FaBriefcase } from "react-icons/fa6";
+import { FaStar, FaBriefcase, FaArrowDown, FaCheckCircle, FaMapMarkerAlt } from "react-icons/fa6";
 import DeepLinkButton from "./DeepLinkButton";
 
 // Define the Next 15+ Params Promise
@@ -10,15 +10,8 @@ type Props = {
 // ==========================================
 // 1. DATA FETCHING FUNCTION
 // ==========================================
-// ==========================================
-// 1. DATA FETCHING FUNCTION
-// ==========================================
-// ==========================================
-// 1. DATA FETCHING FUNCTION
-// ==========================================
 async function getProfile(slug: string) {
   try {
-    // 🚨 FIX: Fall back to your live production API, never a local home IP!
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.ybconnect.in";
     
     console.log(`🌐 Fetching expert profile from: ${backendUrl}/api/v1/profile/slug/${slug}`);
@@ -60,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const company = profile.companyName ? `at ${profile.companyName}` : "";
   const imageUrl = profile.profileImage !== "default-avatar.png" 
     ? profile.profileImage 
-    : "https://ybconnect.in/img/yash.png"; // Use your default logo here
+    : "https://ybconnect.in/img/yash.png"; 
 
   return {
     title: `${name} | YB Connect`,
@@ -90,7 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // ==========================================
-// 3. THE PREMIUM UI FALLBACK
+// 3. THE PREMIUM PROFESSIONAL UI
 // ==========================================
 export default async function ExpertFallbackPage({ params }: Props) {
   const resolvedParams = await params;
@@ -98,10 +91,12 @@ export default async function ExpertFallbackPage({ params }: Props) {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#05060A] text-white flex flex-col items-center justify-center p-6 text-center">
-        <h1 className="text-4xl font-bold text-[#FACC15] mb-4">Profile Not Found</h1>
-        <p className="text-[#94A3B8]">The expert link you clicked might be broken or expired.</p>
-        <a href="/" className="mt-8 px-6 py-3 bg-[#1E293B] rounded-full text-sm font-bold">Go to Homepage</a>
+      <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center justify-center p-6 text-center">
+        <h1 className="text-3xl font-bold text-slate-200 mb-4">Profile Not Found</h1>
+        <p className="text-slate-400 mb-8">This expert link might be broken or expired.</p>
+        <a href="/" className="px-6 py-3 bg-[#1E293B] hover:bg-slate-700 rounded-xl text-sm font-bold transition-all">
+          Go to Homepage
+        </a>
       </div>
     );
   }
@@ -111,51 +106,79 @@ export default async function ExpertFallbackPage({ params }: Props) {
   const designation = profile.designation || "Expert";
   const company = profile.companyName ? `at ${profile.companyName}` : "";
   const imageUrl = profile.profileImage !== "default-avatar.png" ? profile.profileImage : "/img/yash.png";
-  
-  // 🚨 THE MAGIC DEEP LINK URL
-  const appDeepLink = `mobile://u/${resolvedParams.slug}`;
+  const city = profile.city || "Remote";
 
   return (
-    <div className="min-h-screen bg-[#05060A] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
       
-      {/* Background Glow matching your homepage */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[80px] bg-[radial-gradient(circle,rgba(250,204,21,0.1)_0%,rgba(5,6,10,0)_70%)] pointer-events-none z-0"></div>
+      {/* Ambient Background Glow (Subtle Purple/Blue) */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-[500px] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
-      <div className="w-full max-w-md relative z-10 flex flex-col items-center">
+      <div className="w-full max-w-sm relative z-10 flex flex-col items-center">
         
-        {/* YB Connect Branding */}
-        <div className="text-[#FACC15] text-[10px] font-bold tracking-[0.2em] uppercase mb-8 flex items-center gap-2">
-          <FaStar className="animate-pulse" /> YB CONNECT EXPERT
+        {/* Top Branding Pill */}
+        <div className="mb-6">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold tracking-[0.2em] text-purple-400 uppercase shadow-lg">
+            <FaStar className="text-yellow-400" /> YB Connect
+          </span>
         </div>
 
-        {/* Profile Card */}
-        <div className="w-full bg-[rgba(10,14,23,0.8)] backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 flex flex-col items-center text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+        {/* Premium Profile Card */}
+        <div className="w-full bg-[#0F172A]/95 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
           
-          {/* Glowing Avatar */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-[#FACC15] rounded-full blur-[20px] opacity-20"></div>
-            <img 
-              src={imageUrl} 
-              alt={name} 
-              className="w-32 h-32 rounded-full object-cover border-[4px] border-[#1E293B] relative z-10"
-            />
+          {/* Cover Photo / Gradient Banner */}
+          <div className="h-32 bg-gradient-to-r from-purple-600 to-blue-600 relative">
+            {/* Optional dot pattern for texture */}
+            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.4)_1px,transparent_1px)] bg-[size:14px_14px]"></div>
           </div>
 
-          <h1 className="text-3xl font-bold text-white mb-2">{name}</h1>
-          <p className="text-[#FACC15] font-medium flex items-center gap-2 mb-4">
-            <FaBriefcase className="text-sm" /> {designation} {company}
-          </p>
+          {/* Card Content Area */}
+          <div className="px-6 pb-8 text-center relative">
+            
+            {/* Overlapping Avatar (Trendy rounded-2xl look) */}
+            <div className="relative inline-block -mt-16 mb-4">
+              <img 
+                src={imageUrl} 
+                alt={name} 
+                className="w-32 h-32 rounded-[2rem] object-cover border-4 border-[#0F172A] shadow-xl bg-[#1E293B]"
+              />
+              {/* Trust Badge */}
+              <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-1.5 rounded-full border-4 border-[#0F172A]">
+                <FaCheckCircle className="text-sm" />
+              </div>
+            </div>
 
-          <p className="text-[#94A3B8] text-sm leading-relaxed mb-8 line-clamp-3">
-            {profile.bio || `Connect with ${name} for a dedicated 1-on-1 session on YB Connect.`}
-          </p>
+            {/* Name */}
+            <h1 className="text-2xl font-bold text-white mb-2">{name}</h1>
+            
+            {/* Designation */}
+            <p className="text-slate-300 font-medium text-sm flex items-center justify-center gap-2 mb-5">
+              <FaBriefcase className="text-purple-400" /> {designation} {company}
+            </p>
 
-{/* 🚨 THE NEW DEEP LINK BUTTON */}
-          <DeepLinkButton slug={resolvedParams.slug} />
+            {/* Info Pills (Location & Rating) */}
+            <div className="flex justify-center gap-2 mb-6">
+              <span className="px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-xs text-slate-300 flex items-center gap-1.5">
+                <FaMapMarkerAlt className="text-slate-400" /> {city}
+              </span>
+              <span className="px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-xs text-slate-300 flex items-center gap-1.5">
+                ⭐ Top Mentor
+              </span>
+            </div>
 
-          <p className="text-xs text-gray-500 mt-4">
-            Dont have the app? <a href="#" className="text-white underline">Download here</a>
-          </p>
+            {/* Bio */}
+            <p className="text-slate-400 text-sm leading-relaxed mb-8 line-clamp-3 px-2">
+              {profile.bio || `Connect with ${name} for a dedicated 1-on-1 session on YB Connect.`}
+            </p>
+
+            {/* Deep Link Button (Client Component) */}
+            <DeepLinkButton slug={resolvedParams.slug} />
+            
+            {/* Security Note */}
+            <p className="text-[11px] text-slate-500 mt-5 font-medium flex items-center justify-center gap-1">
+               Secure booking via YB Connect
+            </p>
+          </div>
         </div>
       </div>
     </div>
