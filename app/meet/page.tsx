@@ -44,7 +44,6 @@ const RAW_ENV_URL = (
 
 const ROOT_API_ORIGIN = RAW_ENV_URL.replace(/\/api(\/v1)?$/, '');
 
-// Automatically probes /api, /api/v1, and root on api.ybconnect.in so path mismatches never cause 404s
 const CANDIDATE_API_BASES = Array.from(
   new Set([
     `${ROOT_API_ORIGIN}/api`,
@@ -81,7 +80,6 @@ async function postLivekitWebApi(path: string, body: Record<string, any>) {
       const isJson = contentType.includes('application/json');
       const json = isJson ? await res.json() : null;
 
-      // If Express returned a 404 because the route prefix (/api vs /api/v1) didn't match, try the next candidate
       if (
         res.status === 404 &&
         (!isJson || !json?.error?.toLowerCase().includes('appointment'))
@@ -96,7 +94,7 @@ async function postLivekitWebApi(path: string, body: Record<string, any>) {
         return { res, json };
       }
     } catch (err) {
-      // Try next candidate base URL
+      // Try next candidate
     }
   }
 
@@ -105,7 +103,7 @@ async function postLivekitWebApi(path: string, body: Record<string, any>) {
     json: lastJson || {
       success: false,
       error:
-        'Backend endpoint /livekit/web-token returned 404 on api.ybconnect.in. Please make sure your updated livekitRoutes.js and livekitController.js are pushed and deployed to your backend server.',
+        'Backend endpoint /livekit/web-token returned 404 on api.ybconnect.in. Please ensure livekitRoutes.js and livekitController.js are deployed.',
     },
   };
 }
@@ -165,7 +163,7 @@ const QUICK_CHAT_CHIPS = [
 const REACTION_EMOJIS = ['✋', '👍', '👏', '🔥', '💡'];
 
 // ============================================================================
-// REUSABLE WEBRTC VIDEO TRACK RENDERER
+// REUSABLE WEBRTC VIDEO TRACK RENDERER (Explicit Non-Zero Size for AdaptiveStream)
 // ============================================================================
 function LiveKitVideoView({
   track,
@@ -181,7 +179,13 @@ function LiveKitVideoView({
   useEffect(() => {
     const el = videoRef.current;
     if (!el || !track) return;
+
     track.attach(el);
+    const playPromise = el.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {});
+    }
+
     return () => {
       track.detach(el);
     };
@@ -195,7 +199,7 @@ function LiveKitVideoView({
       autoPlay
       playsInline
       muted
-      className={`w-full h-full ${
+      className={`absolute inset-0 w-full h-full ${
         contain ? 'object-contain bg-black' : 'object-cover'
       } ${mirror ? '-scale-x-100' : ''}`}
     />
@@ -210,7 +214,6 @@ function MeetRoomContent() {
   const requestId = searchParams.get('id') || '';
   const ticket = searchParams.get('ticket') || '';
 
-  // Room & Auth Lifecycle State
   const [status, setStatus] = useState<RoomStatus>('verifying');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [sessionData, setSessionData] = useState<SessionMetadata | null>(null);
@@ -231,7 +234,7 @@ function MeetRoomContent() {
     null
   );
 
-  // Device Selector State (Cameras & Microphones)
+  // Device Selector State
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedVideoDeviceId, setSelectedVideoDeviceId] = useState<string>('');
@@ -255,7 +258,7 @@ function MeetRoomContent() {
   const [infoOpen, setInfoOpen] = useState<boolean>(false);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState<boolean>(false);
 
-  // Interactive DataChannel State (Synced with Mobile App)
+  // Interactive DataChannel State
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draftMessage, setDraftMessage] = useState<string>('');
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -309,7 +312,6 @@ function MeetRoomContent() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Report join, 15s heartbeat, leave, or quota_error to backend
   const reportWebEvent = useCallback(
     async (
       action: 'join' | 'heartbeat' | 'leave' | 'quota_error',
@@ -340,7 +342,6 @@ function MeetRoomContent() {
     [requestId, ticket]
   );
 
-  // Verify signed ticket and load session metadata
   const verifyTicketAndFetchSession = useCallback(async () => {
     if (!requestId || !ticket) {
       setStatus('error');
@@ -405,7 +406,6 @@ function MeetRoomContent() {
     verifyTicketAndFetchSession();
   }, [verifyTicketAndFetchSession]);
 
-  // Countdown in Waiting Lobby (>5 mins before start)
   useEffect(() => {
     if (status !== 'waiting_window' || !unlocksAtIso) return;
     const timer = setInterval(() => {
@@ -422,7 +422,7 @@ function MeetRoomContent() {
     return () => clearInterval(timer);
   }, [status, unlocksAtIso, verifyTicketAndFetchSession]);
 
-  // Sync tracks & participant states from the LiveKit Room instance
+  // Sync tracks & ensure Mobile-to-Web Screen Share is always detected & subscribed
   const syncRoomTracks = useCallback((room: Room) => {
     const localCamPub = room.localParticipant.getTrackPublication(
       Track.Source.Camera
@@ -446,7 +446,16 @@ function MeetRoomContent() {
       setRemoteConnected(true);
       setRemoteMicMuted(!remoteP.isMicrophoneEnabled);
 
-      const remoteCamPub = remoteP.getTrackPublication(Track.Source.Camera);
+      const allRemoteVideoPubs = Array.from(
+        remoteP.videoTrackPublications.values()
+      );
+      const allRemotePubs = Array.from(remoteP.trackPublications.values());
+
+      // Identify the remote camera publication
+      const remoteCamPub =
+        remoteP.getTrackPublication(Track.Source.Camera) ||
+        allRemoteVideoPubs.find((p) => p.source === Track.Source.Camera);
+
       const hasActiveRemoteVid = Boolean(
         remoteCamPub?.track && !remoteCamPub.isMuted
       );
@@ -455,9 +464,34 @@ function MeetRoomContent() {
         hasActiveRemoteVid ? (remoteCamPub!.track as Track) : null
       );
 
-      const remoteScreenPub = remoteP.getTrackPublication(
-        Track.Source.ScreenShare
-      );
+      // Identify remote screen share publication (works for both Web & React Native Mobile publishers)
+      const remoteScreenPub: any =
+        remoteP.getTrackPublication(Track.Source.ScreenShare) ||
+        allRemotePubs.find(
+          (p) =>
+            p.source === Track.Source.ScreenShare ||
+            String(p.trackName || '')
+              .toLowerCase()
+              .includes('screen')
+        ) ||
+        allRemoteVideoPubs.find(
+          (p) =>
+            p.trackSid !== remoteCamPub?.trackSid &&
+            p.source !== Track.Source.Camera
+        );
+
+      if (remoteScreenPub) {
+        if (
+          typeof remoteScreenPub.setSubscribed === 'function' &&
+          !remoteScreenPub.isSubscribed
+        ) {
+          remoteScreenPub.setSubscribed(true);
+        }
+        if (typeof remoteScreenPub.setEnabled === 'function') {
+          remoteScreenPub.setEnabled(true);
+        }
+      }
+
       if (remoteScreenPub?.track && !remoteScreenPub.isMuted) {
         setScreenShareTrack(remoteScreenPub.track as Track);
         setScreenShareOwner('remote');
@@ -484,7 +518,6 @@ function MeetRoomContent() {
     }
   }, []);
 
-  // Enumerate hardware cameras & microphones
   const loadMediaDevices = useCallback(async () => {
     try {
       if (!navigator.mediaDevices?.enumerateDevices) return;
@@ -500,7 +533,6 @@ function MeetRoomContent() {
     } catch (e) {}
   }, [selectedVideoDeviceId, selectedAudioDeviceId]);
 
-  // Connect to LiveKit Room
   const startCall = async () => {
     try {
       setStatus('connecting');
@@ -539,10 +571,18 @@ function MeetRoomContent() {
 
       room.on(RoomEvent.ParticipantConnected, () => syncRoomTracks(room));
       room.on(RoomEvent.ParticipantDisconnected, () => syncRoomTracks(room));
+      room.on(RoomEvent.TrackPublished, (publication: any) => {
+        if (typeof publication?.setSubscribed === 'function') {
+          publication.setSubscribed(true);
+        }
+        syncRoomTracks(room);
+      });
+      room.on(RoomEvent.TrackUnpublished, () => syncRoomTracks(room));
       room.on(RoomEvent.LocalTrackPublished, () => syncRoomTracks(room));
       room.on(RoomEvent.LocalTrackUnpublished, () => syncRoomTracks(room));
       room.on(RoomEvent.TrackMuted, () => syncRoomTracks(room));
       room.on(RoomEvent.TrackUnmuted, () => syncRoomTracks(room));
+      room.on(RoomEvent.TrackStreamStateChanged, () => syncRoomTracks(room));
 
       room.on(RoomEvent.TrackSubscribed, (track) => {
         syncRoomTracks(room);
@@ -574,7 +614,6 @@ function MeetRoomContent() {
         setAudioBlocked(!room.canPlaybackAudio);
       });
 
-      // Sync Chat, Emoji Reactions, and Hand Raise with Mobile App
       room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant) => {
         try {
           const rawString = new TextDecoder().decode(payload);
@@ -615,6 +654,8 @@ function MeetRoomContent() {
             setTimeout(() => setFloatingReaction(null), 3200);
           } else if (parsed.type === 'hand_raise') {
             setRemoteHandRaised(Boolean(parsed.raised));
+          } else if (parsed.type === 'screen_share_state') {
+            setTimeout(() => syncRoomTracks(room), 150);
           }
         } catch (e) {}
       });
@@ -634,9 +675,7 @@ function MeetRoomContent() {
 
       try {
         await room.localParticipant.enableCameraAndMicrophone();
-      } catch (mediaErr) {
-        // Allow user into call even if camera/mic permission is partially restricted
-      }
+      } catch (mediaErr) {}
 
       syncRoomTracks(room);
       loadMediaDevices();
@@ -663,7 +702,6 @@ function MeetRoomContent() {
     }
   };
 
-  // 15s Backend Heartbeat & 1s Fair-Play Session Timers
   useEffect(() => {
     if (status !== 'in_call') return;
 
@@ -707,7 +745,6 @@ function MeetRoomContent() {
     };
   }, [status, reportWebEvent, remoteConnected, myRole, sessionData]);
 
-  // Send DataChannel Packet (Chat, Reaction, Hand Raise)
   const sendDataPacket = useCallback(async (dataObj: any) => {
     const room = roomRef.current;
     if (!room?.localParticipant) return;
@@ -770,7 +807,6 @@ function MeetRoomContent() {
     });
   };
 
-  // Hardware Controls
   const toggleMic = async () => {
     const room = roomRef.current;
     if (!room) return;
@@ -822,6 +858,7 @@ function MeetRoomContent() {
       await room.localParticipant.setScreenShareEnabled(next, { audio: true });
       setIsScreenSharing(next);
       syncRoomTracks(room);
+      await sendDataPacket({ type: 'screen_share_state', active: next });
     } catch (e) {
       setIsScreenSharing(false);
     }
@@ -857,7 +894,6 @@ function MeetRoomContent() {
   const isLowTime = remainingSeconds > 0 && remainingSeconds <= 120;
   const isOvertime = remainingSeconds <= 0;
 
-  // Render an Individual Participant Tile (Local or Remote)
   const renderParticipantTile = (
     target: 'local' | 'remote',
     isOverlayPip = false
@@ -905,7 +941,7 @@ function MeetRoomContent() {
             contain={false}
           />
         ) : isLocal || remoteConnected ? (
-          <div className="flex flex-col items-center justify-center p-4 text-center">
+          <div className="flex flex-col items-center justify-center p-4 text-center z-10">
             <div
               className={`${
                 isOverlayPip
@@ -928,8 +964,7 @@ function MeetRoomContent() {
             )}
           </div>
         ) : (
-          /* Waiting for Partner State */
-          <div className="flex flex-col items-center justify-center p-6 text-center max-w-sm">
+          <div className="flex flex-col items-center justify-center p-6 text-center max-w-sm z-10">
             <div className="relative mb-4">
               <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-[#8AB4F8] p-1 flex items-center justify-center">
                 <div className="w-full h-full rounded-full bg-[#202124] flex items-center justify-center text-2xl font-extrabold text-[#8AB4F8]">
@@ -966,8 +1001,7 @@ function MeetRoomContent() {
           </div>
         )}
 
-        {/* Bottom-Left Participant Name & Mic/Hand Pill */}
-        <div className="absolute bottom-2.5 left-2.5 bg-[#202124]/85 backdrop-blur-md px-2.5 py-1 rounded-lg flex items-center gap-1.5 max-w-[85%] border border-white/10">
+        <div className="absolute bottom-2.5 left-2.5 bg-[#202124]/85 backdrop-blur-md px-2.5 py-1 rounded-lg flex items-center gap-1.5 max-w-[85%] border border-white/10 z-10">
           {isSpeaking && (
             <span className="w-2 h-2 rounded-full bg-[#8AB4F8] animate-ping" />
           )}
@@ -982,9 +1016,8 @@ function MeetRoomContent() {
           {isRaised && <span className="text-xs ml-0.5">✋</span>}
         </div>
 
-        {/* Swap Corner Icon on Floating PiP */}
         {isOverlayPip && (
-          <div className="absolute top-2 right-2 bg-[#202124]/80 p-1.5 rounded-full text-[#E8EAED] border border-white/10">
+          <div className="absolute top-2 right-2 bg-[#202124]/80 p-1.5 rounded-full text-[#E8EAED] border border-white/10 z-10">
             <FiRefreshCcw className="w-3 h-3" />
           </div>
         )}
@@ -997,7 +1030,6 @@ function MeetRoomContent() {
 
   return (
     <div className="h-[100dvh] w-screen overflow-hidden bg-[#202124] text-[#E8EAED] flex flex-col font-sans select-none">
-      {/* Hidden Container for Remote WebRTC Audio Streams */}
       <div ref={remoteAudioContainerRef} className="hidden" />
 
       {/* ====================================================================
@@ -1027,7 +1059,6 @@ function MeetRoomContent() {
           </div>
         </button>
 
-        {/* Right Top Controls */}
         <div className="flex items-center gap-1.5 md:gap-2">
           {status === 'in_call' && (
             <>
@@ -1043,7 +1074,6 @@ function MeetRoomContent() {
                 </button>
               )}
 
-              {/* Live Countdown Pill */}
               <button
                 onClick={() => setInfoOpen(true)}
                 className={`px-3 py-1.5 rounded-full text-xs font-extrabold flex items-center gap-1.5 tabular-nums cursor-pointer ${
@@ -1066,7 +1096,6 @@ function MeetRoomContent() {
                   : formatMMSS(remainingSeconds)}
               </button>
 
-              {/* Layout Switcher */}
               <button
                 onClick={cycleLayoutMode}
                 title="Switch Layout (Side-by-Side / PiP / Split)"
@@ -1081,7 +1110,6 @@ function MeetRoomContent() {
                 )}
               </button>
 
-              {/* Camera / Mic Hardware Settings */}
               <button
                 onClick={() => {
                   loadMediaDevices();
@@ -1093,7 +1121,6 @@ function MeetRoomContent() {
                 <FiSettings className="w-4 h-4" />
               </button>
 
-              {/* Fullscreen Toggle */}
               <button
                 onClick={toggleFullscreen}
                 title="Toggle Fullscreen"
@@ -1111,10 +1138,9 @@ function MeetRoomContent() {
       </header>
 
       {/* ====================================================================
-          2. MAIN WORKSPACE AREA (ALL STATES + RESPONSIVE VIDEO STAGE)
+          2. MAIN WORKSPACE AREA
       ==================================================================== */}
       <main className="flex-1 flex overflow-hidden relative px-2.5 md:px-4 py-2 gap-3">
-        {/* STATE A: VERIFYING OR CONNECTING */}
         {(status === 'verifying' || status === 'connecting') && (
           <div className="m-auto text-center space-y-4">
             <div className="w-12 h-12 border-4 border-[#8AB4F8] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -1126,7 +1152,6 @@ function MeetRoomContent() {
           </div>
         )}
 
-        {/* STATE B: WAITING WINDOW (>5 MINS BEFORE SCHEDULED START) */}
         {status === 'waiting_window' && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -1169,7 +1194,6 @@ function MeetRoomContent() {
           </motion.div>
         )}
 
-        {/* STATE C: READY TO JOIN LOBBY */}
         {status === 'ready_lobby' && (
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
@@ -1215,19 +1239,19 @@ function MeetRoomContent() {
         {status === 'in_call' && (
           <>
             <div className="flex-1 h-full relative flex flex-col overflow-hidden">
-              {/* CASE 1: SCREEN SHARE ACTIVE */}
+              {/* CASE 1: SCREEN SHARE ACTIVE (Works for both Mobile-to-Web & Web-to-Mobile) */}
               {screenShareTrack ? (
                 <div className="w-full h-full flex flex-col lg:flex-row gap-2.5 overflow-hidden">
-                  <div className="flex-[3] relative bg-[#131314] border border-[#3C4043] rounded-2xl overflow-hidden flex flex-col">
-                    <div className="bg-[#303134]/90 px-3.5 py-2 flex items-center justify-between border-b border-[#3C4043]">
+                  <div className="flex-[3] h-full min-h-[260px] relative bg-[#131314] border border-[#3C4043] rounded-2xl overflow-hidden flex flex-col">
+                    <div className="bg-[#303134]/95 px-3.5 py-2 flex items-center justify-between border-b border-[#3C4043] shrink-0 z-10">
                       <div className="flex items-center gap-2 text-xs font-bold text-[#8AB4F8]">
                         <FiMonitor className="w-4 h-4" />
                         <span>
                           {screenShareOwner === 'local'
                             ? 'You are presenting your screen'
                             : `${
-                                otherPeer?.name?.split(' ')[0]
-                              } is presenting`}
+                                otherPeer?.name?.split(' ')[0] || 'Participant'
+                              } is presenting their screen`}
                         </span>
                       </div>
                       {isScreenSharing && (
@@ -1239,7 +1263,7 @@ function MeetRoomContent() {
                         </button>
                       )}
                     </div>
-                    <div className="flex-1 min-h-0">
+                    <div className="flex-1 relative w-full min-h-[220px]">
                       <LiveKitVideoView
                         track={screenShareTrack}
                         contain={true}
@@ -1248,10 +1272,10 @@ function MeetRoomContent() {
                   </div>
 
                   <div className="flex-1 lg:max-w-[280px] flex flex-row lg:flex-col gap-2.5 h-32 lg:h-full shrink-0">
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
                       {renderParticipantTile('remote', false)}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
                       {renderParticipantTile('local', true)}
                     </div>
                   </div>
@@ -1259,20 +1283,20 @@ function MeetRoomContent() {
               ) : layoutMode === 'horizontal_split' ? (
                 /* CASE 2: SIDE-BY-SIDE SPLIT */
                 <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                  <div className="w-full h-full min-h-0">
+                  <div className="w-full h-full min-h-0 relative">
                     {renderParticipantTile('remote', false)}
                   </div>
-                  <div className="w-full h-full min-h-0">
+                  <div className="w-full h-full min-h-0 relative">
                     {renderParticipantTile('local', false)}
                   </div>
                 </div>
               ) : layoutMode === 'vertical_split' ? (
                 /* CASE 3: VERTICAL SPLIT */
                 <div className="w-full h-full grid grid-rows-2 gap-2.5">
-                  <div className="w-full h-full min-h-0">
+                  <div className="w-full h-full min-h-0 relative">
                     {renderParticipantTile('remote', false)}
                   </div>
-                  <div className="w-full h-full min-h-0">
+                  <div className="w-full h-full min-h-0 relative">
                     {renderParticipantTile('local', false)}
                   </div>
                 </div>
@@ -1290,7 +1314,6 @@ function MeetRoomContent() {
                 </div>
               )}
 
-              {/* Reconnecting Banner */}
               {isReconnecting && (
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-[#FDD663] text-[#202124] px-4 py-1.5 rounded-full text-xs font-extrabold flex items-center gap-2 shadow-lg z-30">
                   <div className="w-3.5 h-3.5 border-2 border-[#202124] border-t-transparent rounded-full animate-spin" />
@@ -1298,7 +1321,6 @@ function MeetRoomContent() {
                 </div>
               )}
 
-              {/* Floating Emoji Reaction Toast */}
               <AnimatePresence>
                 {floatingReaction && (
                   <motion.div
@@ -1316,16 +1338,16 @@ function MeetRoomContent() {
               </AnimatePresence>
             </div>
 
-            {/* REAL-TIME CHAT DRAWER */}
+            {/* REAL-TIME CHAT DRAWER (With Safe Bottom Spacing Away From Close/Edge) */}
             <AnimatePresence>
               {chatOpen && (
                 <motion.aside
                   initial={{ opacity: 0, x: 40 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 40 }}
-                  className="fixed inset-x-0 bottom-0 top-14 lg:static lg:w-88 bg-[#202124] lg:bg-[#303134] border-t lg:border border-[#3C4043] lg:rounded-2xl flex flex-col z-40 shadow-2xl"
+                  className="fixed inset-x-2 bottom-4 top-16 lg:static lg:w-88 bg-[#202124] lg:bg-[#303134] border border-[#3C4043] rounded-3xl lg:rounded-2xl flex flex-col z-40 shadow-2xl overflow-hidden"
                 >
-                  <div className="px-4 py-3 border-b border-[#3C4043] flex items-center justify-between">
+                  <div className="px-4 py-3.5 border-b border-[#3C4043] flex items-center justify-between bg-[#303134]">
                     <div>
                       <h3 className="text-sm font-bold text-[#E8EAED]">
                         In-Call Messages
@@ -1336,19 +1358,19 @@ function MeetRoomContent() {
                     </div>
                     <button
                       onClick={() => setChatOpen(false)}
-                      className="w-8 h-8 rounded-full bg-[#3C4043]/60 hover:bg-[#3C4043] flex items-center justify-center cursor-pointer"
+                      className="w-9 h-9 rounded-full bg-[#202124] hover:bg-[#3C4043] flex items-center justify-center cursor-pointer border border-[#3C4043]"
                     >
-                      <FiX className="w-4 h-4" />
+                      <FiX className="w-4 h-4 text-[#E8EAED]" />
                     </button>
                   </div>
 
                   {/* Quick Reply Chips */}
-                  <div className="px-3 py-2 border-b border-[#3C4043]/60 flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                  <div className="px-3.5 py-2.5 border-b border-[#3C4043]/60 flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
                     {QUICK_CHAT_CHIPS.map((chip) => (
                       <button
                         key={chip}
                         onClick={() => handleSendChat(chip)}
-                        className="bg-[#202124] hover:bg-[#3C4043] text-[#8AB4F8] border border-[#3C4043] px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap cursor-pointer transition"
+                        className="bg-[#202124] hover:bg-[#3C4043] text-[#8AB4F8] border border-[#3C4043] px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap cursor-pointer transition"
                       >
                         {chip}
                       </button>
@@ -1356,7 +1378,7 @@ function MeetRoomContent() {
                   </div>
 
                   {/* Messages List */}
-                  <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
                     {messages.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center text-center text-[#9AA0A6] text-xs px-4">
                         <FiMessageSquare className="w-8 h-8 mb-2 opacity-50" />
@@ -1369,7 +1391,7 @@ function MeetRoomContent() {
                       messages.map((m) => (
                         <div
                           key={m.id}
-                          className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs ${
+                          className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs ${
                             m.isLocal
                               ? 'ml-auto bg-[#8AB4F8] text-[#202124] rounded-br-xs font-semibold'
                               : 'mr-auto bg-[#202124] text-[#E8EAED] border border-[#3C4043] rounded-bl-xs'
@@ -1390,25 +1412,25 @@ function MeetRoomContent() {
                     <div ref={chatEndRef} />
                   </div>
 
-                  {/* Input Box */}
+                  {/* Input Box with Generous Bottom Padding */}
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
                       handleSendChat();
                     }}
-                    className="p-3 border-t border-[#3C4043] flex items-center gap-2"
+                    className="px-4 pt-3 pb-6 lg:pb-4 border-t border-[#3C4043] bg-[#303134] flex items-center gap-2.5"
                   >
                     <input
                       type="text"
                       value={draftMessage}
                       onChange={(e) => setDraftMessage(e.target.value)}
-                      placeholder="Send a message..."
-                      className="flex-1 bg-[#202124] text-[#E8EAED] placeholder-[#9AA0A6] text-xs rounded-full px-4 py-2.5 border border-[#3C4043] focus:outline-none focus:border-[#8AB4F8]"
+                      placeholder="Send a message to everyone..."
+                      className="flex-1 bg-[#202124] text-[#E8EAED] placeholder-[#9AA0A6] text-xs rounded-full px-4 py-3 border border-[#3C4043] focus:outline-none focus:border-[#8AB4F8]"
                     />
                     <button
                       type="submit"
                       disabled={!draftMessage.trim()}
-                      className="w-9 h-9 rounded-full bg-[#8AB4F8] disabled:opacity-40 text-[#202124] flex items-center justify-center shrink-0 cursor-pointer"
+                      className="w-10 h-10 rounded-full bg-[#8AB4F8] disabled:opacity-40 text-[#202124] flex items-center justify-center shrink-0 cursor-pointer shadow-md"
                     >
                       <FiSend className="w-4 h-4" />
                     </button>
@@ -1470,8 +1492,9 @@ function MeetRoomContent() {
             </h2>
             <p className="text-xs text-[#9AA0A6] leading-relaxed">
               Your accumulated talk time ({formatMMSS(togetherSeconds)}) has
-              been saved to your YB Connect account. If the session window is
-              still active, you can rejoin below.
+              been saved to your YB Connect account. You can rate & review your
+              session inside the YB Connect mobile app or rejoin below if the
+              session window is still active.
             </p>
             <button
               onClick={verifyTicketAndFetchSession}
@@ -1504,8 +1527,7 @@ function MeetRoomContent() {
           3. REACTION STRIP + GOOGLE MEET / ZOOM BOTTOM CONTROL DOCK
       ==================================================================== */}
       {status === 'in_call' && (
-        <footer className="px-3 pb-3 pt-1 bg-[#202124] flex flex-col items-center gap-2 shrink-0 z-20">
-          {/* Quick Emoji Reaction Bar + Raise Hand */}
+        <footer className="px-3 pb-4 pt-1 bg-[#202124] flex flex-col items-center gap-2 shrink-0 z-20">
           <div className="flex items-center gap-1.5 md:gap-2">
             {REACTION_EMOJIS.map((emoji) => (
               <button
@@ -1529,9 +1551,7 @@ function MeetRoomContent() {
             </button>
           </div>
 
-          {/* Main Control Pill */}
           <div className="bg-[#303134] border border-[#3C4043] px-4 py-2 rounded-full flex items-center gap-2.5 md:gap-3.5 shadow-xl">
-            {/* 1. Mic Toggle */}
             <button
               onClick={toggleMic}
               title={isMicEnabled ? 'Mute Microphone' : 'Unmute Microphone'}
@@ -1548,7 +1568,6 @@ function MeetRoomContent() {
               )}
             </button>
 
-            {/* 2. Camera Toggle */}
             <button
               onClick={toggleCam}
               title={isCamEnabled ? 'Turn Off Camera' : 'Turn On Camera'}
@@ -1565,7 +1584,6 @@ function MeetRoomContent() {
               )}
             </button>
 
-            {/* 3. Flip / Switch Camera */}
             <button
               onClick={flipOrSwitchCamera}
               title="Switch Camera"
@@ -1574,7 +1592,6 @@ function MeetRoomContent() {
               <FiRefreshCcw className="w-4 h-4" />
             </button>
 
-            {/* 4. Screen Share */}
             <button
               onClick={toggleScreenShare}
               title={isScreenSharing ? 'Stop Screen Share' : 'Share Screen'}
@@ -1590,7 +1607,6 @@ function MeetRoomContent() {
               </span>
             </button>
 
-            {/* 5. In-Call Chat Drawer Button */}
             <button
               onClick={() => setChatOpen(!chatOpen)}
               title="In-Call Chat"
@@ -1608,7 +1624,6 @@ function MeetRoomContent() {
               )}
             </button>
 
-            {/* 6. Leave Call Button */}
             <button
               onClick={() => setLeaveConfirmOpen(true)}
               title="Leave Call"
@@ -1822,7 +1837,7 @@ function MeetRoomContent() {
       </AnimatePresence>
 
       {/* ====================================================================
-          MODAL 3: LEAVE CONFIRMATION (PROTECTS MENTOR WAIT TIME)
+          MODAL 3: LEAVE CONFIRMATION
       ==================================================================== */}
       <AnimatePresence>
         {leaveConfirmOpen && (
