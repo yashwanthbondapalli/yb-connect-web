@@ -39,7 +39,7 @@ import {
 } from 'react-icons/fi';
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'https://api.ybconnect.in/api/v1';
+  process.env.NEXT_PUBLIC_API_URL || 'https://ybconnect.in/api/v1';
 
 type RoomStatus =
   | 'verifying'
