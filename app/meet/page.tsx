@@ -54,7 +54,6 @@ function MeetRoomContent() {
   const [unlocksAtIso, setUnlocksAtIso] = useState<string | null>(null);
   const [countdownText, setCountdownText] = useState<string>('');
 
-  // Media Controls State
   const [isMicEnabled, setIsMicEnabled] = useState<boolean>(true);
   const [isCamEnabled, setIsCamEnabled] = useState<boolean>(true);
   const [isScreenSharing, setIsScreenSharing] = useState<boolean>(false);
@@ -62,14 +61,12 @@ function MeetRoomContent() {
   const [remoteName, setRemoteName] = useState<string>('Waiting for participant...');
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
-  // Refs for WebRTC Video & Audio Elements
   const roomRef = useRef<Room | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteAudioContainerRef = useRef<HTMLDivElement | null>(null);
   const credentialsRef = useRef<{ token: string; wsUrl: string } | null>(null);
 
-  // Send attendance heartbeat/events to backend
   const reportWebEvent = useCallback(
     async (action: 'join' | 'heartbeat' | 'leave' | 'quota_error', errorReason?: string) => {
       if (!requestId || !ticket) return;
@@ -88,7 +85,6 @@ function MeetRoomContent() {
     [requestId, ticket]
   );
 
-  // Verify ticket & fetch token/session info
   const verifyTicketAndFetchSession = useCallback(async () => {
     if (!requestId || !ticket) {
       setStatus('error');
@@ -145,7 +141,6 @@ function MeetRoomContent() {
     verifyTicketAndFetchSession();
   }, [verifyTicketAndFetchSession]);
 
-  // Countdown timer when user opens laptop link > 5 mins before session start
   useEffect(() => {
     if (status !== 'waiting_window' || !unlocksAtIso) return;
     const timer = setInterval(() => {
@@ -162,7 +157,6 @@ function MeetRoomContent() {
     return () => clearInterval(timer);
   }, [status, unlocksAtIso, verifyTicketAndFetchSession]);
 
-  // Attach local camera track whenever localVideoRef mounts
   const attachLocalPreview = useCallback(() => {
     const room = roomRef.current;
     if (!room || !localVideoRef.current) return;
@@ -172,12 +166,10 @@ function MeetRoomContent() {
     }
   }, []);
 
-  // Connect to LiveKit 1:1 Room
   const startCall = async () => {
     try {
       setStatus('connecting');
 
-      // Always fetch a fresh token right when clicking Join
       const res = await fetch(`${API_BASE_URL}/livekit/web-token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -218,7 +210,7 @@ function MeetRoomContent() {
         }
       };
 
-      room.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
+      room.on(RoomEvent.ParticipantConnected, () => {
         syncRemoteParticipants();
       });
 
@@ -267,7 +259,6 @@ function MeetRoomContent() {
       setTimeout(attachLocalPreview, 300);
     } catch (err: any) {
       const msg = String(err?.message || '').toLowerCase();
-      // Detect LiveKit Free Plan / Quota / Capacity exhaustion
       if (
         msg.includes('quota') ||
         msg.includes('limit') ||
@@ -289,7 +280,6 @@ function MeetRoomContent() {
     }
   };
 
-  // 15-second attendance heartbeat + auto-cutoff guard so nobody burns extra hours
   useEffect(() => {
     if (status !== 'in_call') return;
 
@@ -363,7 +353,6 @@ function MeetRoomContent() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans">
-      {/* Top Security & Brand Header */}
       <header className="h-16 px-6 border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-md flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-lg shadow-lg shadow-blue-600/30">
@@ -399,9 +388,7 @@ function MeetRoomContent() {
         )}
       </header>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex items-center justify-center p-4 md:p-6">
-        {/* STATE 1: VERIFYING OR CONNECTING */}
         {(status === 'verifying' || status === 'connecting') && (
           <div className="text-center space-y-4">
             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
@@ -413,7 +400,6 @@ function MeetRoomContent() {
           </div>
         )}
 
-        {/* STATE 2: WAITING WINDOW (>5 MINS BEFORE START) */}
         {status === 'waiting_window' && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -451,7 +437,6 @@ function MeetRoomContent() {
           </motion.div>
         )}
 
-        {/* STATE 3: READY TO JOIN LOBBY */}
         {status === 'ready_lobby' && (
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
@@ -491,11 +476,9 @@ function MeetRoomContent() {
           </motion.div>
         )}
 
-        {/* STATE 4: ACTIVE ZOOM-STYLE 1:1 VIDEO STAGE */}
         {status === 'in_call' && (
           <div className="w-full max-w-6xl h-[calc(100vh-8.5rem)] flex flex-col gap-4">
             <div className="relative flex-1 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center">
-              {/* Remote Participant Full Video */}
               <video
                 ref={remoteVideoRef}
                 autoPlay
@@ -505,7 +488,6 @@ function MeetRoomContent() {
                 }`}
               />
 
-              {/* Remote Audio Container */}
               <div ref={remoteAudioContainerRef} className="hidden" />
 
               {!remoteConnected && (
@@ -523,7 +505,6 @@ function MeetRoomContent() {
                 </div>
               )}
 
-              {/* Remote Name Badge */}
               <div className="absolute top-4 left-4 bg-slate-950/75 backdrop-blur-md border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
                 <span
                   className={`w-2 h-2 rounded-full ${
@@ -533,7 +514,6 @@ function MeetRoomContent() {
                 {remoteConnected ? partnerPerson?.name || remoteName : 'Waiting for partner...'}
               </div>
 
-              {/* Picture-in-Picture Local Video */}
               <div className="absolute bottom-4 right-4 w-48 md:w-64 aspect-video bg-slate-950 border-2 border-slate-700 rounded-xl overflow-hidden shadow-2xl">
                 <video
                   ref={localVideoRef}
@@ -548,7 +528,6 @@ function MeetRoomContent() {
               </div>
             </div>
 
-            {/* Bottom Control Bar */}
             <div className="h-16 bg-slate-900 border border-slate-800 rounded-2xl px-6 flex items-center justify-center gap-4">
               <button
                 onClick={toggleMic}
@@ -600,7 +579,6 @@ function MeetRoomContent() {
           </div>
         )}
 
-        {/* STATE 5: DUPLICATE IDENTITY KICKED (ANTI-LINK-SHARING GUARD) */}
         {status === 'duplicate_kicked' && (
           <div className="max-w-md w-full bg-slate-900 border border-amber-500/40 rounded-2xl p-6 text-center space-y-4">
             <FiAlertTriangle className="w-12 h-12 text-amber-400 mx-auto" />
@@ -618,7 +596,6 @@ function MeetRoomContent() {
           </div>
         )}
 
-        {/* STATE 6: LIVEKIT FREE PLAN / QUOTA EXHAUSTED FALLBACK */}
         {status === 'quota_exhausted' && (
           <div className="max-w-md w-full bg-slate-900 border border-blue-500/40 rounded-2xl p-6 text-center space-y-4">
             <FiShield className="w-12 h-12 text-blue-400 mx-auto" />
@@ -639,7 +616,6 @@ function MeetRoomContent() {
           </div>
         )}
 
-        {/* STATE 7: SESSION ENDED */}
         {status === 'ended' && (
           <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center space-y-4">
             <FiCheckCircle className="w-12 h-12 text-emerald-400 mx-auto" />
@@ -657,7 +633,6 @@ function MeetRoomContent() {
           </div>
         )}
 
-        {/* STATE 8: ERROR */}
         {status === 'error' && (
           <div className="max-w-md w-full bg-slate-900 border border-red-500/30 rounded-2xl p-6 text-center space-y-4">
             <FiAlertTriangle className="w-12 h-12 text-red-400 mx-auto" />
@@ -676,7 +651,7 @@ function MeetRoomContent() {
   );
 }
 
-export default function MeetPage() {
+export file default function MeetPage() {
   return (
     <Suspense
       fallback={
