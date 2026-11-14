@@ -594,6 +594,13 @@ function MeetRoomContent() {
           remoteAudioContainerRef.current.appendChild(audioEl);
         }
       });
+      room.on(RoomEvent.TrackPublished, (pub) => {
+  if (pub.source === Track.Source.ScreenShare) {
+    pub.setSubscribed(true);
+  }
+  syncRoomTracks(room);
+});
+room.on(RoomEvent.TrackUnpublished, () => syncRoomTracks(room));
 
       room.on(RoomEvent.TrackUnsubscribed, (track) => {
         track.detach().forEach((el) => el.remove());
