@@ -38,8 +38,77 @@ import {
   FiVolume2,
 } from 'react-icons/fi';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'https://ybconnect.in/api/v1';
+const RAW_ENV_URL = (
+  process.env.NEXT_PUBLIC_API_URL || 'https://api.ybconnect.in'
+).replace(/\/+$/, '');
+
+const ROOT_API_ORIGIN = RAW_ENV_URL.replace(/\/api(\/v1)?$/, '');
+
+// Automatically probes /api, /api/v1, and root on api.ybconnect.in so path mismatches never cause 404s
+const CANDIDATE_API_BASES = Array.from(
+  new Set([
+    `${ROOT_API_ORIGIN}/api`,
+    `${ROOT_API_ORIGIN}/api/v1`,
+    RAW_ENV_URL,
+    'https://api.ybconnect.in/api',
+    'https://api.ybconnect.in/api/v1',
+    'https://api.ybconnect.in',
+  ])
+);
+
+let cachedWorkingBaseUrl: string | null = null;
+
+async function postLivekitWebApi(path: string, body: Record<string, any>) {
+  const candidates = cachedWorkingBaseUrl
+    ? [
+        cachedWorkingBaseUrl,
+        ...CANDIDATE_API_BASES.filter((b) => b !== cachedWorkingBaseUrl),
+      ]
+    : CANDIDATE_API_BASES;
+
+  let lastRes: Response | null = null;
+  let lastJson: any = null;
+
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const contentType = res.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const json = isJson ? await res.json() : null;
+
+      // If Express returned a 404 because the route prefix (/api vs /api/v1) didn't match, try the next candidate
+      if (
+        res.status === 404 &&
+        (!isJson || !json?.error?.toLowerCase().includes('appointment'))
+      ) {
+        lastRes = res;
+        lastJson = json;
+        continue;
+      }
+
+      if (isJson && json) {
+        cachedWorkingBaseUrl = base;
+        return { res, json };
+      }
+    } catch (err) {
+      // Try next candidate base URL
+    }
+  }
+
+  return {
+    res: lastRes || new Response(null, { status: 404 }),
+    json: lastJson || {
+      success: false,
+      error:
+        'Backend endpoint /livekit/web-token returned 404 on api.ybconnect.in. Please make sure your updated livekitRoutes.js and livekitController.js are pushed and deployed to your backend server.',
+    },
+  };
+}
 
 type RoomStatus =
   | 'verifying'
@@ -96,7 +165,7 @@ const QUICK_CHAT_CHIPS = [
 const REACTION_EMOJIS = ['✋', '👍', '👏', '🔥', '💡'];
 
 // ============================================================================
-// REUSABLE WEBVIDEO TRACK RENDERER (Handles Layout Swaps & Remounts Cleanly)
+// REUSABLE WEBRTC VIDEO TRACK RENDERER
 // ============================================================================
 function LiveKitVideoView({
   track,
@@ -126,9 +195,9 @@ function LiveKitVideoView({
       autoPlay
       playsInline
       muted
-      className={`w-full h-full ${contain ? 'object-contain bg-black' : 'object-cover'} ${
-        mirror ? '-scale-x-100' : ''
-      }`}
+      className={`w-full h-full ${
+        contain ? 'object-contain bg-black' : 'object-cover'
+      } ${mirror ? '-scale-x-100' : ''}`}
     />
   );
 }
@@ -158,7 +227,9 @@ function MeetRoomContent() {
   const [localCamTrack, setLocalCamTrack] = useState<Track | null>(null);
   const [remoteCamTrack, setRemoteCamTrack] = useState<Track | null>(null);
   const [screenShareTrack, setScreenShareTrack] = useState<Track | null>(null);
-  const [screenShareOwner, setScreenShareOwner] = useState<'local' | 'remote' | null>(null);
+  const [screenShareOwner, setScreenShareOwner] = useState<'local' | 'remote' | null>(
+    null
+  );
 
   // Device Selector State (Cameras & Microphones)
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
@@ -209,11 +280,13 @@ function MeetRoomContent() {
     chatOpenRef.current = chatOpen;
     if (chatOpen) {
       setUnreadCount(0);
-      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      setTimeout(
+        () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }),
+        100
+      );
     }
   }, [chatOpen]);
 
-  // Default to PiP on narrow mobile screens and Side-by-Side on laptops/desktops
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (window.innerWidth < 768) {
@@ -224,8 +297,10 @@ function MeetRoomContent() {
     }
   }, []);
 
-  const myInfo = myRole === 'expert' ? sessionData?.expert : sessionData?.student;
-  const otherPeer = myRole === 'expert' ? sessionData?.student : sessionData?.expert;
+  const myInfo =
+    myRole === 'expert' ? sessionData?.expert : sessionData?.student;
+  const otherPeer =
+    myRole === 'expert' ? sessionData?.student : sessionData?.expert;
 
   const formatMMSS = (sec: number) => {
     const absSec = Math.max(0, sec);
@@ -236,21 +311,28 @@ function MeetRoomContent() {
 
   // Report join, 15s heartbeat, leave, or quota_error to backend
   const reportWebEvent = useCallback(
-    async (action: 'join' | 'heartbeat' | 'leave' | 'quota_error', errorReason?: string) => {
+    async (
+      action: 'join' | 'heartbeat' | 'leave' | 'quota_error',
+      errorReason?: string
+    ) => {
       if (!requestId || !ticket) return;
       try {
-        const res = await fetch(`${API_BASE_URL}/livekit/web-session-event`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ requestId, ticket, action, errorReason }),
+        const { json } = await postLivekitWebApi('/livekit/web-session-event', {
+          requestId,
+          ticket,
+          action,
+          errorReason,
         });
-        const json = await res.json();
         if (json?.success && json.data) {
           if (typeof json.data.bothConnectedSeconds === 'number') {
-            setTogetherSeconds((prev) => Math.max(prev, json.data.bothConnectedSeconds));
+            setTogetherSeconds((prev) =>
+              Math.max(prev, json.data.bothConnectedSeconds)
+            );
           }
           if (typeof json.data.expertPresentSeconds === 'number') {
-            setExpertWaitSeconds((prev) => Math.max(prev, json.data.expertPresentSeconds));
+            setExpertWaitSeconds((prev) =>
+              Math.max(prev, json.data.expertPresentSeconds)
+            );
           }
         }
       } catch (e) {}
@@ -270,21 +352,22 @@ function MeetRoomContent() {
 
     try {
       setStatus('verifying');
-      const res = await fetch(`${API_BASE_URL}/livekit/web-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId, ticket }),
+      const { res, json } = await postLivekitWebApi('/livekit/web-token', {
+        requestId,
+        ticket,
       });
-      const json = await res.json();
 
-      if (!res.ok || !json.success) {
-        if (res.status === 503 || json.code === 'LIVEKIT_CONFIG_MISSING') {
-          await reportWebEvent('quota_error', json.error || 'service_unavailable');
+      if (!res.ok || !json?.success) {
+        if (res.status === 503 || json?.code === 'LIVEKIT_CONFIG_MISSING') {
+          await reportWebEvent(
+            'quota_error',
+            json?.error || 'service_unavailable'
+          );
           setStatus('quota_exhausted');
           return;
         }
         setStatus('error');
-        setErrorMessage(json.error || 'Unable to verify meeting link.');
+        setErrorMessage(json?.error || 'Unable to verify meeting link.');
         return;
       }
 
@@ -297,7 +380,8 @@ function MeetRoomContent() {
 
       if (payload.session?.scheduledEndAt) {
         const diff = Math.floor(
-          (new Date(payload.session.scheduledEndAt).getTime() - Date.now()) / 1000
+          (new Date(payload.session.scheduledEndAt).getTime() - Date.now()) /
+            1000
         );
         setRemainingSeconds(diff);
       }
@@ -340,18 +424,22 @@ function MeetRoomContent() {
 
   // Sync tracks & participant states from the LiveKit Room instance
   const syncRoomTracks = useCallback((room: Room) => {
-    // 1. Local Camera & Screen Share
-    const localCamPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+    const localCamPub = room.localParticipant.getTrackPublication(
+      Track.Source.Camera
+    );
     setLocalCamTrack(
-      localCamPub?.track && !localCamPub.isMuted ? (localCamPub.track as Track) : null
+      localCamPub?.track && !localCamPub.isMuted
+        ? (localCamPub.track as Track)
+        : null
     );
     setIsCamEnabled(room.localParticipant.isCameraEnabled);
     setIsMicEnabled(room.localParticipant.isMicrophoneEnabled);
     setIsScreenSharing(room.localParticipant.isScreenShareEnabled);
 
-    const localScreenPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
+    const localScreenPub = room.localParticipant.getTrackPublication(
+      Track.Source.ScreenShare
+    );
 
-    // 2. Remote Participant Camera, Mic & Screen Share
     const remotes = Array.from(room.remoteParticipants.values());
     if (remotes.length > 0) {
       const remoteP = remotes[0];
@@ -359,11 +447,17 @@ function MeetRoomContent() {
       setRemoteMicMuted(!remoteP.isMicrophoneEnabled);
 
       const remoteCamPub = remoteP.getTrackPublication(Track.Source.Camera);
-      const hasActiveRemoteVid = Boolean(remoteCamPub?.track && !remoteCamPub.isMuted);
+      const hasActiveRemoteVid = Boolean(
+        remoteCamPub?.track && !remoteCamPub.isMuted
+      );
       setRemoteCamMuted(!hasActiveRemoteVid);
-      setRemoteCamTrack(hasActiveRemoteVid ? (remoteCamPub!.track as Track) : null);
+      setRemoteCamTrack(
+        hasActiveRemoteVid ? (remoteCamPub!.track as Track) : null
+      );
 
-      const remoteScreenPub = remoteP.getTrackPublication(Track.Source.ScreenShare);
+      const remoteScreenPub = remoteP.getTrackPublication(
+        Track.Source.ScreenShare
+      );
       if (remoteScreenPub?.track && !remoteScreenPub.isMuted) {
         setScreenShareTrack(remoteScreenPub.track as Track);
         setScreenShareOwner('remote');
@@ -390,7 +484,7 @@ function MeetRoomContent() {
     }
   }, []);
 
-  // Enumerate hardware cameras & microphones for laptop/PC switching
+  // Enumerate hardware cameras & microphones
   const loadMediaDevices = useCallback(async () => {
     try {
       if (!navigator.mediaDevices?.enumerateDevices) return;
@@ -399,8 +493,10 @@ function MeetRoomContent() {
       const auds = devices.filter((d) => d.kind === 'audioinput');
       setVideoDevices(vids);
       setAudioDevices(auds);
-      if (vids.length > 0 && !selectedVideoDeviceId) setSelectedVideoDeviceId(vids[0].deviceId);
-      if (auds.length > 0 && !selectedAudioDeviceId) setSelectedAudioDeviceId(auds[0].deviceId);
+      if (vids.length > 0 && !selectedVideoDeviceId)
+        setSelectedVideoDeviceId(vids[0].deviceId);
+      if (auds.length > 0 && !selectedAudioDeviceId)
+        setSelectedAudioDeviceId(auds[0].deviceId);
     } catch (e) {}
   }, [selectedVideoDeviceId, selectedAudioDeviceId]);
 
@@ -409,21 +505,19 @@ function MeetRoomContent() {
     try {
       setStatus('connecting');
 
-      const res = await fetch(`${API_BASE_URL}/livekit/web-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId, ticket }),
+      const { res, json } = await postLivekitWebApi('/livekit/web-token', {
+        requestId,
+        ticket,
       });
-      const json = await res.json();
 
-      if (!res.ok || !json.success || !json.data?.token || !json.data?.wsUrl) {
+      if (!res.ok || !json?.success || !json.data?.token || !json.data?.wsUrl) {
         if (res.status === 503 || res.status === 429) {
           await reportWebEvent('quota_error', 'token_endpoint_capacity');
           setStatus('quota_exhausted');
           return;
         }
         setStatus('error');
-        setErrorMessage(json.error || 'Could not start video session.');
+        setErrorMessage(json?.error || 'Could not start video session.');
         return;
       }
 
@@ -452,7 +546,10 @@ function MeetRoomContent() {
 
       room.on(RoomEvent.TrackSubscribed, (track) => {
         syncRoomTracks(room);
-        if (track.kind === Track.Kind.Audio && remoteAudioContainerRef.current) {
+        if (
+          track.kind === Track.Kind.Audio &&
+          remoteAudioContainerRef.current
+        ) {
           const audioEl = track.attach();
           remoteAudioContainerRef.current.appendChild(audioEl);
         }
@@ -510,7 +607,10 @@ function MeetRoomContent() {
           } else if (parsed.type === 'reaction') {
             setFloatingReaction({
               emoji: parsed.emoji,
-              sender: parsed.senderName || otherPeer?.name?.split(' ')[0] || 'Peer',
+              sender:
+                parsed.senderName ||
+                otherPeer?.name?.split(' ')[0] ||
+                'Peer',
             });
             setTimeout(() => setFloatingReaction(null), 3200);
           } else if (parsed.type === 'hand_raise') {
@@ -535,7 +635,7 @@ function MeetRoomContent() {
       try {
         await room.localParticipant.enableCameraAndMicrophone();
       } catch (mediaErr) {
-        // Allow user into the call even if their PC lacks a webcam or mic permission was partially denied
+        // Allow user into call even if camera/mic permission is partially restricted
       }
 
       syncRoomTracks(room);
@@ -637,7 +737,10 @@ function MeetRoomContent() {
 
     setMessages((prev) => [...prev.slice(-99), newMsg]);
     if (!overrideText) setDraftMessage('');
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
+    setTimeout(
+      () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }),
+      80
+    );
 
     await sendDataPacket({
       type: 'chat',
@@ -691,13 +794,17 @@ function MeetRoomContent() {
     if (!room) return;
     try {
       if (videoDevices.length > 1) {
-        const currentIdx = videoDevices.findIndex((d) => d.deviceId === selectedVideoDeviceId);
+        const currentIdx = videoDevices.findIndex(
+          (d) => d.deviceId === selectedVideoDeviceId
+        );
         const nextDevice = videoDevices[(currentIdx + 1) % videoDevices.length];
         await room.switchActiveDevice('videoinput', nextDevice.deviceId);
         setSelectedVideoDeviceId(nextDevice.deviceId);
       } else {
         const nextMode = facingMode === 'user' ? 'environment' : 'user';
-        const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        const camPub = room.localParticipant.getTrackPublication(
+          Track.Source.Camera
+        );
         if (camPub?.videoTrack) {
           await camPub.videoTrack.restartTrack({ facingMode: nextMode });
           setFacingMode(nextMode);
@@ -751,10 +858,15 @@ function MeetRoomContent() {
   const isOvertime = remainingSeconds <= 0;
 
   // Render an Individual Participant Tile (Local or Remote)
-  const renderParticipantTile = (target: 'local' | 'remote', isOverlayPip = false) => {
+  const renderParticipantTile = (
+    target: 'local' | 'remote',
+    isOverlayPip = false
+  ) => {
     const isLocal = target === 'local';
     const track = isLocal ? localCamTrack : remoteCamTrack;
-    const hasVideo = isLocal ? isCamEnabled && Boolean(track) : !remoteCamMuted && Boolean(track);
+    const hasVideo = isLocal
+      ? isCamEnabled && Boolean(track)
+      : !remoteCamMuted && Boolean(track);
     const micEnabled = isLocal ? isMicEnabled : !remoteMicMuted;
     const isSpeaking = isLocal ? localSpeaking : remoteSpeaking;
     const isRaised = isLocal ? handRaised : remoteHandRaised;
@@ -796,16 +908,21 @@ function MeetRoomContent() {
           <div className="flex flex-col items-center justify-center p-4 text-center">
             <div
               className={`${
-                isOverlayPip ? 'w-12 h-12 text-base' : 'w-20 h-20 md:w-24 md:h-24 text-2xl'
+                isOverlayPip
+                  ? 'w-12 h-12 text-base'
+                  : 'w-20 h-20 md:w-24 md:h-24 text-2xl'
               } rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-extrabold flex items-center justify-center shadow-lg border-2 border-white/15 mb-3`}
             >
               {initials}
             </div>
             {!isOverlayPip && (
               <>
-                <p className="text-[#E8EAED] font-bold text-sm md:text-base">{personName}</p>
+                <p className="text-[#E8EAED] font-bold text-sm md:text-base">
+                  {personName}
+                </p>
                 <span className="mt-1.5 inline-flex items-center gap-1.5 bg-[#3C4043] text-[#E8EAED] text-[11px] font-semibold px-3 py-1 rounded-full">
-                  <FiVideoOff className="w-3 h-3 text-slate-300" /> Camera is off
+                  <FiVideoOff className="w-3 h-3 text-slate-300" /> Camera is
+                  off
                 </span>
               </>
             )}
@@ -821,18 +938,25 @@ function MeetRoomContent() {
               </div>
               <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-[#F29900] border-2 border-[#303134]" />
             </div>
-            <h3 className="text-[#E8EAED] text-lg font-bold">{otherPeer?.name}</h3>
-            <p className="text-[#9AA0A6] text-xs mb-4">{otherPeer?.designation || personRole}</p>
+            <h3 className="text-[#E8EAED] text-lg font-bold">
+              {otherPeer?.name}
+            </h3>
+            <p className="text-[#9AA0A6] text-xs mb-4">
+              {otherPeer?.designation || personRole}
+            </p>
 
             {!isOverlayPip && (
               <div className="bg-[#202124] border border-[#3C4043] rounded-2xl p-4 w-full space-y-2">
                 <div className="w-5 h-5 border-2 border-[#8AB4F8] border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-[#E8EAED] text-xs font-bold">
-                  Waiting for {otherPeer?.name?.split(' ')[0] || 'partner'} to join...
+                  Waiting for {otherPeer?.name?.split(' ')[0] || 'partner'} to
+                  join...
                 </p>
                 <p className="text-[#9AA0A6] text-[11px] leading-relaxed">
                   {myRole === 'expert'
-                    ? `Solo Wait Timer: ${formatMMSS(expertWaitSeconds)} / ${formatMMSS(
+                    ? `Solo Wait Timer: ${formatMMSS(
+                        expertWaitSeconds
+                      )} / ${formatMMSS(
                         requiredWaitSec
                       )} required for student no-show payout protection.`
                     : 'Your attendance timer is active and synced with YB Connect.'}
@@ -844,8 +968,12 @@ function MeetRoomContent() {
 
         {/* Bottom-Left Participant Name & Mic/Hand Pill */}
         <div className="absolute bottom-2.5 left-2.5 bg-[#202124]/85 backdrop-blur-md px-2.5 py-1 rounded-lg flex items-center gap-1.5 max-w-[85%] border border-white/10">
-          {isSpeaking && <span className="w-2 h-2 rounded-full bg-[#8AB4F8] animate-ping" />}
-          <span className="text-white text-[11px] font-semibold truncate">{personName}</span>
+          {isSpeaking && (
+            <span className="w-2 h-2 rounded-full bg-[#8AB4F8] animate-ping" />
+          )}
+          <span className="text-white text-[11px] font-semibold truncate">
+            {personName}
+          </span>
           {!micEnabled && (
             <span className="w-4 h-4 rounded-full bg-[#EA4335] flex items-center justify-center">
               <FiMicOff className="w-2.5 h-2.5 text-white" />
@@ -928,7 +1056,9 @@ function MeetRoomContent() {
               >
                 <span
                   className={`w-2 h-2 rounded-full ${
-                    remoteConnected ? 'bg-[#34A853] animate-pulse' : 'bg-[#F29900]'
+                    remoteConnected
+                      ? 'bg-[#34A853] animate-pulse'
+                      : 'bg-[#F29900]'
                   }`}
                 />
                 {isOvertime
@@ -1014,9 +1144,12 @@ function MeetRoomContent() {
                 Room Unlocks in {countdownText || '...'}
               </h2>
               <p className="text-xs text-[#9AA0A6] mt-2 leading-relaxed">
-                Keep this tab open! The video room unlocks automatically 5 minutes before your
-                scheduled session with{' '}
-                <strong className="text-white">{otherPeer?.name || 'your partner'}</strong>.
+                Keep this tab open! The video room unlocks automatically 5
+                minutes before your scheduled session with{' '}
+                <strong className="text-white">
+                  {otherPeer?.name || 'your partner'}
+                </strong>
+                .
               </p>
             </div>
             <div className="bg-[#202124] border border-[#3C4043] rounded-2xl p-4 text-left text-xs space-y-2">
@@ -1028,7 +1161,9 @@ function MeetRoomContent() {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#9AA0A6]">Duration:</span>
-                <span className="font-bold text-[#34A853]">{durationMins} Minutes</span>
+                <span className="font-bold text-[#34A853]">
+                  {durationMins} Minutes
+                </span>
               </div>
             </div>
           </motion.div>
@@ -1047,7 +1182,8 @@ function MeetRoomContent() {
                   ● Room Unlocked & Ready
                 </span>
                 <h2 className="text-lg md:text-xl font-extrabold mt-0.5">
-                  Join as {myName} ({myRole === 'expert' ? 'Mentor' : 'Student'})
+                  Join as {myName} ({myRole === 'expert' ? 'Mentor' : 'Student'}
+                  )
                 </h2>
               </div>
               <FiShield className="w-8 h-8 text-[#8AB4F8] shrink-0" />
@@ -1059,8 +1195,9 @@ function MeetRoomContent() {
               </p>
               <p className="text-[#9AA0A6]">Topic: {sessionData?.topic}</p>
               <p className="text-[#FDD663] text-[11px] pt-1 leading-relaxed">
-                🔒 Strict 1:1 Security: Only 1 active device is permitted per account. Joining on
-                this browser automatically disconnects any open session on your phone.
+                🔒 Strict 1:1 Security: Only 1 active device is permitted per
+                account. Joining on this browser automatically disconnects any
+                open session on your phone.
               </p>
             </div>
 
@@ -1068,7 +1205,8 @@ function MeetRoomContent() {
               onClick={startCall}
               className="w-full py-3.5 rounded-full bg-[#8AB4F8] hover:bg-[#aecbfa] text-[#202124] font-extrabold text-sm shadow-lg flex items-center justify-center gap-2 transition cursor-pointer"
             >
-              <FiVideo className="w-4 h-4" /> Join {durationMins}m Video Session Now
+              <FiVideo className="w-4 h-4" /> Join {durationMins}m Video Session
+              Now
             </button>
           </motion.div>
         )}
@@ -1077,7 +1215,7 @@ function MeetRoomContent() {
         {status === 'in_call' && (
           <>
             <div className="flex-1 h-full relative flex flex-col overflow-hidden">
-              {/* CASE 1: SCREEN SHARE ACTIVE (Presentation Stage + Filmstrip) */}
+              {/* CASE 1: SCREEN SHARE ACTIVE */}
               {screenShareTrack ? (
                 <div className="w-full h-full flex flex-col lg:flex-row gap-2.5 overflow-hidden">
                   <div className="flex-[3] relative bg-[#131314] border border-[#3C4043] rounded-2xl overflow-hidden flex flex-col">
@@ -1087,7 +1225,9 @@ function MeetRoomContent() {
                         <span>
                           {screenShareOwner === 'local'
                             ? 'You are presenting your screen'
-                            : `${otherPeer?.name?.split(' ')[0]} is presenting`}
+                            : `${
+                                otherPeer?.name?.split(' ')[0]
+                              } is presenting`}
                         </span>
                       </div>
                       {isScreenSharing && (
@@ -1100,17 +1240,24 @@ function MeetRoomContent() {
                       )}
                     </div>
                     <div className="flex-1 min-h-0">
-                      <LiveKitVideoView track={screenShareTrack} contain={true} />
+                      <LiveKitVideoView
+                        track={screenShareTrack}
+                        contain={true}
+                      />
                     </div>
                   </div>
 
                   <div className="flex-1 lg:max-w-[280px] flex flex-row lg:flex-col gap-2.5 h-32 lg:h-full shrink-0">
-                    <div className="flex-1">{renderParticipantTile('remote', false)}</div>
-                    <div className="flex-1">{renderParticipantTile('local', true)}</div>
+                    <div className="flex-1">
+                      {renderParticipantTile('remote', false)}
+                    </div>
+                    <div className="flex-1">
+                      {renderParticipantTile('local', true)}
+                    </div>
                   </div>
                 </div>
               ) : layoutMode === 'horizontal_split' ? (
-                /* CASE 2: SIDE-BY-SIDE SPLIT (Responsive: stacked on portrait phone, side-by-side on tablet/laptop) */
+                /* CASE 2: SIDE-BY-SIDE SPLIT */
                 <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-2.5">
                   <div className="w-full h-full min-h-0">
                     {renderParticipantTile('remote', false)}
@@ -1120,7 +1267,7 @@ function MeetRoomContent() {
                   </div>
                 </div>
               ) : layoutMode === 'vertical_split' ? (
-                /* CASE 3: VERTICAL SPLIT (Top / Bottom) */
+                /* CASE 3: VERTICAL SPLIT */
                 <div className="w-full h-full grid grid-rows-2 gap-2.5">
                   <div className="w-full h-full min-h-0">
                     {renderParticipantTile('remote', false)}
@@ -1130,7 +1277,7 @@ function MeetRoomContent() {
                   </div>
                 </div>
               ) : (
-                /* CASE 4: FLOATING PICTURE-IN-PICTURE (Tap PiP to Swap Main & PiP) */
+                /* CASE 4: FLOATING PICTURE-IN-PICTURE */
                 <div className="w-full h-full relative">
                   {renderParticipantTile(mainTarget, false)}
                   <button
@@ -1169,7 +1316,7 @@ function MeetRoomContent() {
               </AnimatePresence>
             </div>
 
-            {/* REAL-TIME CHAT DRAWER (Side Panel on Desktop, Full Drawer on Mobile) */}
+            {/* REAL-TIME CHAT DRAWER */}
             <AnimatePresence>
               {chatOpen && (
                 <motion.aside
@@ -1180,7 +1327,9 @@ function MeetRoomContent() {
                 >
                   <div className="px-4 py-3 border-b border-[#3C4043] flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-bold text-[#E8EAED]">In-Call Messages</h3>
+                      <h3 className="text-sm font-bold text-[#E8EAED]">
+                        In-Call Messages
+                      </h3>
                       <p className="text-[11px] text-[#9AA0A6]">
                         Synced live with YB Connect mobile app
                       </p>
@@ -1211,7 +1360,10 @@ function MeetRoomContent() {
                     {messages.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center text-center text-[#9AA0A6] text-xs px-4">
                         <FiMessageSquare className="w-8 h-8 mb-2 opacity-50" />
-                        <p>No messages yet. Send a quick note or link to your partner!</p>
+                        <p>
+                          No messages yet. Send a quick note or link to your
+                          partner!
+                        </p>
                       </div>
                     ) : (
                       messages.map((m) => (
@@ -1224,10 +1376,14 @@ function MeetRoomContent() {
                           }`}
                         >
                           <div className="flex items-center justify-between gap-3 mb-0.5 text-[10px] opacity-75">
-                            <span className="font-bold">{m.isLocal ? 'You' : m.senderName}</span>
+                            <span className="font-bold">
+                              {m.isLocal ? 'You' : m.senderName}
+                            </span>
                             <span>{m.timestamp}</span>
                           </div>
-                          <p className="leading-relaxed break-words">{m.text}</p>
+                          <p className="leading-relaxed break-words">
+                            {m.text}
+                          </p>
                         </div>
                       ))
                     )}
@@ -1263,14 +1419,17 @@ function MeetRoomContent() {
           </>
         )}
 
-        {/* STATE E: DUPLICATE IDENTITY KICKED (ANTI-LINK-SHARING GUARD) */}
+        {/* STATE E: DUPLICATE IDENTITY KICKED */}
         {status === 'duplicate_kicked' && (
           <div className="m-auto max-w-md w-full bg-[#303134] border border-[#F29900]/50 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
             <FiAlertTriangle className="w-12 h-12 text-[#F29900] mx-auto" />
-            <h2 className="text-lg font-extrabold">Connected on Another Device</h2>
+            <h2 className="text-lg font-extrabold">
+              Connected on Another Device
+            </h2>
             <p className="text-xs text-[#9AA0A6] leading-relaxed">
-              Your account joined this session from another tab or mobile device. For strict 1:1
-              mentorship security, only one active connection is allowed per participant.
+              Your account joined this session from another tab or mobile
+              device. For strict 1:1 mentorship security, only one active
+              connection is allowed per participant.
             </p>
             <button
               onClick={startCall}
@@ -1289,9 +1448,9 @@ function MeetRoomContent() {
               High Video Server Traffic — Your Booking is 100% Protected
             </h2>
             <p className="text-xs text-[#9AA0A6] leading-relaxed">
-              Our media server capacity is temporarily full. We have automatically paused no-show
-              penalties on this booking so neither the student nor the mentor loses money or
-              ratings.
+              Our media server capacity is temporarily full. We have
+              automatically paused no-show penalties on this booking so neither
+              the student nor the mentor loses money or ratings.
             </p>
             <button
               onClick={verifyTicketAndFetchSession}
@@ -1306,10 +1465,13 @@ function MeetRoomContent() {
         {status === 'ended' && (
           <div className="m-auto max-w-md w-full bg-[#303134] border border-[#3C4043] rounded-3xl p-6 text-center space-y-4 shadow-2xl">
             <FiCheckCircle className="w-12 h-12 text-[#34A853] mx-auto" />
-            <h2 className="text-lg font-extrabold">You Left the Video Studio</h2>
+            <h2 className="text-lg font-extrabold">
+              You Left the Video Studio
+            </h2>
             <p className="text-xs text-[#9AA0A6] leading-relaxed">
-              Your accumulated talk time ({formatMMSS(togetherSeconds)}) has been saved to your YB
-              Connect account. If the session window is still active, you can rejoin below.
+              Your accumulated talk time ({formatMMSS(togetherSeconds)}) has
+              been saved to your YB Connect account. If the session window is
+              still active, you can rejoin below.
             </p>
             <button
               onClick={verifyTicketAndFetchSession}
@@ -1325,7 +1487,9 @@ function MeetRoomContent() {
           <div className="m-auto max-w-md w-full bg-[#303134] border border-[#EA4335]/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
             <FiAlertTriangle className="w-12 h-12 text-[#EA4335] mx-auto" />
             <h2 className="text-lg font-extrabold">Unable to Join Meeting</h2>
-            <p className="text-xs text-[#9AA0A6] leading-relaxed">{errorMessage}</p>
+            <p className="text-xs text-[#9AA0A6] leading-relaxed">
+              {errorMessage}
+            </p>
             <button
               onClick={verifyTicketAndFetchSession}
               className="w-full py-3 rounded-full bg-[#8AB4F8] text-[#202124] font-extrabold text-xs cursor-pointer"
@@ -1377,7 +1541,11 @@ function MeetRoomContent() {
                   : 'bg-[#EA4335] text-white'
               }`}
             >
-              {isMicEnabled ? <FiMic className="w-5 h-5" /> : <FiMicOff className="w-5 h-5" />}
+              {isMicEnabled ? (
+                <FiMic className="w-5 h-5" />
+              ) : (
+                <FiMicOff className="w-5 h-5" />
+              )}
             </button>
 
             {/* 2. Camera Toggle */}
@@ -1390,7 +1558,11 @@ function MeetRoomContent() {
                   : 'bg-[#EA4335] text-white'
               }`}
             >
-              {isCamEnabled ? <FiVideo className="w-5 h-5" /> : <FiVideoOff className="w-5 h-5" />}
+              {isCamEnabled ? (
+                <FiVideo className="w-5 h-5" />
+              ) : (
+                <FiVideoOff className="w-5 h-5" />
+              )}
             </button>
 
             {/* 3. Flip / Switch Camera */}
@@ -1450,7 +1622,7 @@ function MeetRoomContent() {
       )}
 
       {/* ====================================================================
-          MODAL 1: SESSION & FAIR-PLAY ATTENDANCE STATUS (MATCHES MOBILE)
+          MODAL 1: SESSION & FAIR-PLAY ATTENDANCE STATUS
       ==================================================================== */}
       <AnimatePresence>
         {infoOpen && (
@@ -1477,9 +1649,12 @@ function MeetRoomContent() {
                 <p className="text-[10px] font-extrabold text-[#9AA0A6] uppercase tracking-wider">
                   SESSION TOPIC
                 </p>
-                <p className="text-sm font-extrabold text-white">{sessionData?.topic}</p>
+                <p className="text-sm font-extrabold text-white">
+                  {sessionData?.topic}
+                </p>
                 <p className="text-xs text-[#9AA0A6]">
-                  Booked Package: {durationMins} Minutes • ₹{sessionData?.amount}
+                  Booked Package: {durationMins} Minutes • ₹
+                  {sessionData?.amount}
                 </p>
               </div>
 
@@ -1489,10 +1664,13 @@ function MeetRoomContent() {
                 </p>
                 <p
                   className={`text-base font-extrabold ${
-                    togetherSeconds >= requiredTalkSec ? 'text-[#34A853]' : 'text-[#8AB4F8]'
+                    togetherSeconds >= requiredTalkSec
+                      ? 'text-[#34A853]'
+                      : 'text-[#8AB4F8]'
                   }`}
                 >
-                  {formatMMSS(togetherSeconds)} / {formatMMSS(requiredTalkSec)} required
+                  {formatMMSS(togetherSeconds)} / {formatMMSS(requiredTalkSec)}{' '}
+                  required
                 </p>
                 <p className="text-xs text-[#9AA0A6] leading-relaxed">
                   {togetherSeconds >= requiredTalkSec
@@ -1507,10 +1685,13 @@ function MeetRoomContent() {
                 </p>
                 <p
                   className={`text-base font-extrabold ${
-                    expertWaitSeconds >= requiredWaitSec ? 'text-[#34A853]' : 'text-[#FDD663]'
+                    expertWaitSeconds >= requiredWaitSec
+                      ? 'text-[#34A853]'
+                      : 'text-[#FDD663]'
                   }`}
                 >
-                  {formatMMSS(expertWaitSeconds)} / {formatMMSS(requiredWaitSec)} waited
+                  {formatMMSS(expertWaitSeconds)} /{' '}
+                  {formatMMSS(requiredWaitSec)} waited
                 </p>
                 <p className="text-xs text-[#9AA0A6] leading-relaxed">
                   {expertWaitSeconds >= requiredWaitSec
@@ -1568,7 +1749,9 @@ function MeetRoomContent() {
               className="max-w-md w-full bg-[#202124] border border-[#3C4043] rounded-3xl p-6 space-y-4 shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-[#3C4043] pb-3">
-                <h3 className="text-base font-extrabold">Audio & Video Settings</h3>
+                <h3 className="text-base font-extrabold">
+                  Audio & Video Settings
+                </h3>
                 <button
                   onClick={() => setDeviceModalOpen(false)}
                   className="w-8 h-8 rounded-full bg-[#303134] flex items-center justify-center cursor-pointer"
@@ -1579,13 +1762,18 @@ function MeetRoomContent() {
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-[#9AA0A6] font-bold mb-1.5">Camera</label>
+                  <label className="block text-[#9AA0A6] font-bold mb-1.5">
+                    Camera
+                  </label>
                   <select
                     value={selectedVideoDeviceId}
                     onChange={async (e) => {
                       const id = e.target.value;
                       setSelectedVideoDeviceId(id);
-                      await roomRef.current?.switchActiveDevice('videoinput', id);
+                      await roomRef.current?.switchActiveDevice(
+                        'videoinput',
+                        id
+                      );
                     }}
                     className="w-full bg-[#303134] border border-[#3C4043] rounded-xl px-3 py-2.5 text-white focus:outline-none"
                   >
@@ -1598,13 +1786,18 @@ function MeetRoomContent() {
                 </div>
 
                 <div>
-                  <label className="block text-[#9AA0A6] font-bold mb-1.5">Microphone</label>
+                  <label className="block text-[#9AA0A6] font-bold mb-1.5">
+                    Microphone
+                  </label>
                   <select
                     value={selectedAudioDeviceId}
                     onChange={async (e) => {
                       const id = e.target.value;
                       setSelectedAudioDeviceId(id);
-                      await roomRef.current?.switchActiveDevice('audioinput', id);
+                      await roomRef.current?.switchActiveDevice(
+                        'audioinput',
+                        id
+                      );
                     }}
                     className="w-full bg-[#303134] border border-[#3C4043] rounded-xl px-3 py-2.5 text-white focus:outline-none"
                   >
@@ -1640,9 +1833,13 @@ function MeetRoomContent() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="max-w-sm w-full bg-[#303134] border border-[#3C4043] rounded-3xl p-6 space-y-4 text-center shadow-2xl"
             >
-              <h3 className="text-base font-extrabold text-white">Leave Video Call?</h3>
+              <h3 className="text-base font-extrabold text-white">
+                Leave Video Call?
+              </h3>
               <p className="text-xs text-[#9AA0A6] leading-relaxed">
-                {myRole === 'expert' && !remoteConnected && expertWaitSeconds < requiredWaitSec
+                {myRole === 'expert' &&
+                !remoteConnected &&
+                expertWaitSeconds < requiredWaitSec
                   ? `The student has not joined yet. Stay until your Solo Wait Time reaches ${formatMMSS(
                       requiredWaitSec
                     )} (currently ${formatMMSS(
